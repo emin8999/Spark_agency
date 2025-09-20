@@ -1,0 +1,293 @@
+* {
+  box-sizing: border-box;
+}
+:root {
+  --bg: #b299d4; /* Begonvil */
+  --fg: #222;
+  --muted: #b8b8b8;
+  --acc: #d7e0f5; /* Rüzgar Gülü */
+  --card: #d5dbf0; /* Frezya */
+  --line: #222;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.header,
+.footer {
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+.header-inner,
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+}
+.brand {
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.nav a {
+  padding: 10px 12px;
+  border-radius: 12px;
+  transition: background 0.2s;
+}
+.nav a:hover {
+  background: #1e1e1e;
+}
+.lang-switch button {
+  background: var(--acc);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.hero {
+  padding: 72px 24px;
+  display: grid;
+  gap: 16px;
+  background: radial-gradient(1200px 600px at 80% -20%, #1e1e1e, transparent);
+}
+.hero h1 {
+  font-size: clamp(28px, 5vw, 48px);
+  margin: 0;
+}
+.hero p {
+  color: var(--muted);
+  margin: 0;
+  font-size: clamp(16px, 2.2vw, 20px);
+}
+.btn {
+  background: var(--acc);
+  color: #121212;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-weight: 700;
+  display: inline-block;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 16px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 18px;
+}
+.services .item {
+  grid-column: span 6;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.services .icon {
+  font-size: 26px;
+}
+.packages .item {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.badge {
+  display: inline-block;
+  background: #1d1d1d;
+  border: 1px solid var(--line);
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.gallery .item {
+  grid-column: span 6;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+}
+.gallery img,
+.gallery video {
+  width: 100%;
+  display: block;
+}
+.faq .qa {
+  grid-column: span 12;
+  border-bottom: 1px dashed var(--line);
+  padding: 12px 0;
+}
+.footer {
+  border-top: 1px solid var(--line);
+}
+.footer .nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.footer-note {
+  color: var(--fg);
+  font-size: 14px;
+}
+.contact-form {
+  display: grid;
+  gap: 12px;
+  max-width: 560px;
+}
+input,
+textarea,
+select {
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+label {
+  color: var(--muted);
+  font-size: 14px;
+}
+hr.sep {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 24px 0;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .services .item,
+  .packages .item,
+  .gallery .item {
+    grid-column: span 12;
+  }
+  .header-inner,
+  .footer-inner {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+/* ----- Mobile Burger / Drawer ----- */
+.burger-btn {
+  display: none;
+  background: var(--acc);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 82vw;
+  max-width: 360px;
+  height: 100vh;
+  background: var(--card);
+  border-left: 1px solid var(--line);
+  transform: translateX(100%);
+  transition: transform 0.25s ease-out;
+  z-index: 1002;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+.mobile-drawer.open {
+  transform: translateX(0);
+}
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.drawer-close {
+  background: #1b1b1b;
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.brand-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+}
+.drawer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.drawer-nav a {
+  padding: 10px 12px;
+  border-radius: 12px;
+  transition: background 0.2s;
+}
+.drawer-nav a:hover {
+  background: #1e1e1e;
+}
+.drawer-lang {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.drawer-socials {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.drawer-backdrop {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 1001;
+}
+.drawer-backdrop.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.no-scroll {
+  overflow: hidden;
+}
+
+/* Hide desktop nav and show burger on small screens */
+@media (max-width: 900px) {
+  .desktop-nav {
+    display: none !important;
+  }
+  .burger-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}

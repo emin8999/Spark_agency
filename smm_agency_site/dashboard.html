@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard — SMM CMS</title>
+    <link rel="stylesheet" href="assets/css/style.css" />
+    <style>
+      .dash {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 24px;
+      }
+      .dash .row {
+        display: grid;
+        gap: 8px;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+      .row-inline {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      textarea.json {
+        min-height: 360px;
+        font-family: ui-monospace, Consolas, monospace;
+      }
+      .help {
+        color: var(--muted);
+        font-size: 12px;
+      }
+    </style>
+    <script type="module" src="assets/js/i18n.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Dashboard — Məzmun idarəetməsi</h1>
+      <div class="dash">
+        <div class="card">
+          <div class="row-inline">
+            <button id="btn-ru" class="btn">RU</button>
+            <button id="btn-az" class="btn">AZ</button>
+            <span class="help"
+              >Cari dil etiketlərə və mətnlərə təsir edir.</span
+            >
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Sürətli redaktə: Brend və Hero</h3>
+          <div class="row">
+            <label>Loqo (şəkil)</label>
+            <input id="brandLogoFile" type="file" accept="image/*" />
+            <img
+              id="brandLogoPreview"
+              alt="logo preview"
+              style="
+                width: 56px;
+                height: 56px;
+                object-fit: cover;
+                border-radius: 10px;
+                border: 1px solid var(--line);
+                display: none;
+              "
+            />
+            <span class="help"
+              >Loqo localStorage-da saxlanacaq və header-də görünəcək.</span
+            >
+          </div>
+          <div class="grid-2">
+            <div class="row">
+              <label>Brend adı</label>
+              <input id="brandInput" placeholder="Alievs Space SMM" />
+              <span class="help">Header-də göstərilir.</span>
+            </div>
+            <div class="row">
+              <label>Hero Başlıq (RU / AZ)</label>
+              <input
+                id="heroTitleRu"
+                placeholder="Tam dövriyyəli SMM agentliyi"
+              />
+              <input
+                id="heroTitleAz"
+                placeholder="Tam dövriyyəli SMM agentliyi"
+              />
+            </div>
+            <div class="row">
+              <label>Hero Alt başlıq (RU / AZ)</label>
+              <input
+                id="heroSubRu"
+                placeholder="Dizayn, kreativlik, strategiya və artım — hamısı bir yerdə."
+              />
+              <input
+                id="heroSubAz"
+                placeholder="Dizayn, kreativlik, strategiya və artım — hamısı bir yerdə."
+              />
+            </div>
+          </div>
+          <div class="row-inline">
+            <button id="save-hero" class="btn">Yadda saxla</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Qalereya (şəkillər və videolar)</h3>
+          <div id="galleryList" class="list"></div>
+          <div class="row-inline">
+            <select id="galleryType">
+              <option value="image">image</option>
+              <option value="video">video</option>
+            </select>
+
+            <input id="galleryFile" type="file" accept="image/*,video/*" />
+
+            <input
+              id="gallerySrc"
+              placeholder="Faylın URL-i (jpg/png/mp4)"
+              style="min-width: 320px"
+            />
+            <input id="galleryAlt" placeholder="Alt/təsvir" />
+            <button id="addGallery" class="btn">Əlavə et</button>
+          </div>
+          <span class="help"
+            >Fayllar Data URL kimi localStorage-da saxlanılır. Dəstək: şəkillər
+            (jpg/png/webp) və videolar (mp4).</span
+          >
+        </div>
+
+        <div class="card">
+          <h3>Servislər</h3>
+          <div id="servicesList" class="list"></div>
+
+          <div class="row-inline">
+            <div class="row-inline">
+              <!-- <input
+                id="svcIcon"
+                placeholder="İkon (emoji), məsələn 🎨"
+                style="width: 120px"
+              /> -->
+              <input id="svcTitleRu" placeholder="Başlıq (RU)" />
+              <input id="svcTitleAz" placeholder="Başlıq (AZ)" />
+            </div>
+            <div class="row-inline">
+              <input
+                id="svcDescRu"
+                placeholder="Təsvir (RU)"
+                style="min-width: 360px"
+              />
+              <input
+                id="svcDescAz"
+                placeholder="Təsvir (AZ)"
+                style="min-width: 360px"
+              />
+              <input id="svcIconFile" type="file" accept="image/*" />
+              <button id="addService" class="btn">Servis əlavə et</button>
+            </div>
+
+            <span class="help"
+              >Servislər «Əsas» və «Xidmətlər» səhifələrində göstərilir.</span
+            >
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Haqqımızda</h3>
+
+          <!-- HERO -->
+          <div class="row">
+            <label>Hero — Başlıq (RU / AZ)</label>
+            <input
+              id="aboutHeroTitleRu"
+              placeholder="Haqqımızda — kreativlik & artım"
+            />
+            <input
+              id="aboutHeroTitleAz"
+              placeholder="Haqqımızda — kreativlik & artım"
+            />
+          </div>
+          <div class="row">
+            <label>Hero — Alt başlıq (RU / AZ)</label>
+            <input
+              id="aboutHeroSubRu"
+              placeholder="Strategiya, dizayn və performansı birləşdiririk."
+            />
+            <input
+              id="aboutHeroSubAz"
+              placeholder="Strategiya, dizayn və performansı birləşdiririk."
+            />
+          </div>
+          <div class="row-inline">
+            <label>Hero — Banner (şəkil)</label>
+            <input id="aboutHeroImg" type="file" accept="image/*" />
+            <img
+              id="aboutHeroPreview"
+              alt="hero"
+              style="
+                width: 120px;
+                height: 64px;
+                object-fit: cover;
+                border-radius: 10px;
+                border: 1px solid var(--line);
+                display: none;
+              "
+            />
+            <button id="aboutHeroSave" class="btn">Hero-nu yadda saxla</button>
+          </div>
+          <hr class="sep" />
+
+          <!-- STATS -->
+          <h4>Statistika (KPI)</h4>
+          <div id="aboutStatsList" class="list"></div>
+          <div class="row-inline">
+            <input id="statLabelRu" placeholder="Təcrübə ayı (RU)" />
+            <input id="statLabelAz" placeholder="Təcrübə ayı (AZ)" />
+            <input id="statValue" placeholder="12" />
+            <button id="addStat" class="btn">KPI əlavə et</button>
+          </div>
+          <hr class="sep" />
+
+          <!-- VALUES -->
+          <h4>Dəyərlər</h4>
+          <div id="aboutValuesList" class="list"></div>
+          <div class="row-inline">
+            <input
+              id="valRu"
+              placeholder="Müştəriyə fokus (RU)"
+              style="min-width: 360px"
+            />
+            <input
+              id="valAz"
+              placeholder="Müştəriyə fokus (AZ)"
+              style="min-width: 360px"
+            />
+            <button id="addValue" class="btn">Dəyər əlavə et</button>
+          </div>
+          <hr class="sep" />
+
+          <!-- TIMELINE -->
+          <h4>Zaman xətti</h4>
+          <div id="aboutTimelineList" class="list"></div>
+          <div class="row-inline">
+            <input id="tlYear" placeholder="2023" style="width: 120px" />
+            <input
+              id="tlTextRu"
+              placeholder="Agentliyi açdıq (RU)"
+              style="min-width: 320px"
+            />
+            <input
+              id="tlTextAz"
+              placeholder="Agentliyi açdıq (AZ)"
+              style="min-width: 320px"
+            />
+            <button id="addTimeline" class="btn">Hadisə əlavə et</button>
+          </div>
+          <hr class="sep" />
+
+          <!-- TEAM -->
+          <h4>Komanda</h4>
+          <div id="aboutTeamList" class="list"></div>
+          <div class="row-inline">
+            <input id="teamName" placeholder="Ad" />
+            <input id="teamRoleRu" placeholder="Rol (RU)" />
+            <input id="teamRoleAz" placeholder="Rol (AZ)" />
+            <input id="teamAvatar" type="file" accept="image/*" />
+            <button id="addTeam" class="btn">Üzv əlavə et</button>
+          </div>
+          <span class="help"
+            >Bütün təsvirlər Data URL kimi localStorage-da saxlanılır.</span
+          >
+        </div>
+
+        <div class="card">
+          <h3>Paketlər</h3>
+          <div id="packagesList" class="list"></div>
+          <div class="row-inline">
+            <input id="pkgNameRu" placeholder="Ad (RU)" />
+            <input id="pkgNameAz" placeholder="Ad (AZ)" />
+            <input id="pkgPrice" type="number" placeholder="Qiymət" />
+            <input id="pkgCurrency" placeholder="Valyuta (USD/AZN)" />
+            <input id="pkgFeaturesRu" placeholder="Funksiyalar RU ; ilə" />
+            <input id="pkgFeaturesAz" placeholder="Funksiyalar AZ ; ilə" />
+            <button id="addPkg" class="btn">Paket əlavə et</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>FAQ</h3>
+          <div id="faqList" class="list"></div>
+          <div class="row-inline">
+            <input id="faqQRu" placeholder="Sual RU" />
+            <input id="faqQAz" placeholder="Sual AZ" />
+            <input
+              id="faqARu"
+              placeholder="Cavab RU"
+              style="min-width: 320px"
+            />
+            <input
+              id="faqAAz"
+              placeholder="Cavab AZ"
+              style="min-width: 320px"
+            />
+            <button id="addFaq" class="btn">FAQ əlavə et</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Tam JSON (eksport/idxal)</h3>
+          <textarea id="jsonArea" class="json"></textarea>
+          <div class="row-inline">
+            <button id="exportBtn" class="btn">Eksport</button>
+            <button id="importBtn" class="btn">İdxal</button>
+            <span class="help">İdxal hazırkı məzmunu tam əvəz edəcək.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import {
+        getContent,
+        updateContent,
+        setLocale,
+      } from "./assets/js/i18n.js";
+
+      /* ---------- Helpers ---------- */
+      function readFileAsDataURL(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+      function setAcceptByType(input, type) {
+        if (!input) return;
+        input.accept = type === "video" ? "video/*" : "image/*";
+      }
+      function ensureAbout() {
+        const c = getContent();
+        if (!c.about) {
+          updateContent((cc) => {
+            cc.about = {
+              hero: {
+                title: {
+                  ru: "О нас — креатив & рост",
+                  az: "Haqqımızda — kreativlik & artım",
+                },
+                subtitle: {
+                  ru: "Мы соединяем стратегию, дизайн и перформанс.",
+                  az: "Strategiya, dizayn və performansı birləşdiririk.",
+                },
+                imageSrc: "",
+              },
+              stats: [],
+              values: [],
+              timeline: [],
+              team: [],
+            };
+          });
+        }
+      }
+
+      /* ---------- SERVICES (CRUD + icon file) ---------- */
+      function renderServicesAdmin() {
+        const list = document.getElementById("servicesList");
+        if (!list) return;
+        const c = getContent();
+        list.innerHTML = c.services
+          .map(
+            (s, idx) => `
+      <div class="row-inline">
+        ${
+          s.iconSrc
+            ? `<img src="${s.iconSrc}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px;border:1px solid var(--line)">`
+            : `<span class="badge">emoji</span>`
+        }
+        <input value="${
+          s.icon || ""
+        }" data-idx="${idx}" data-field="icon" style="width:100px" placeholder="эмодзи/символ">
+        <input type="file" data-idx="${idx}" data-act="svc-icon-file" accept="image/*">
+      </div>
+      <div class="row-inline" style="margin-top:-6px">
+        <input value="${
+          s.title?.ru || ""
+        }" data-idx="${idx}" data-field="title.ru" placeholder="Заголовок RU">
+        <input value="${
+          s.title?.az || ""
+        }" data-idx="${idx}" data-field="title.az" placeholder="Başlıq AZ">
+      </div>
+      <div class="row-inline" style="margin-top:-6px">
+        <input value="${
+          s.desc?.ru || ""
+        }" data-idx="${idx}" data-field="desc.ru" placeholder="Описание RU" style="min-width:360px">
+        <input value="${
+          s.desc?.az || ""
+        }" data-idx="${idx}" data-field="desc.az" placeholder="Təsvir AZ" style="min-width:360px">
+        <button data-idx="${idx}" data-act="del-svc" class="btn">Удалить</button>
+      </div>
+      <hr class="sep">
+    `
+          )
+          .join("");
+
+        list.querySelectorAll("input[data-field]").forEach((inp) => {
+          inp.addEventListener("change", () => {
+            const idx = +inp.dataset.idx;
+            const field = inp.dataset.field;
+            updateContent((c) => {
+              if (field === "icon") c.services[idx].icon = inp.value;
+              else {
+                const [grp, loc] = field.split(".");
+                c.services[idx][grp][loc] = inp.value;
+              }
+            });
+          });
+        });
+
+        list
+          .querySelectorAll('input[type="file"][data-act="svc-icon-file"]')
+          .forEach((fileInp) => {
+            fileInp.addEventListener("change", async () => {
+              const file = fileInp.files?.[0];
+              if (!file) return;
+              const idx = +fileInp.dataset.idx;
+              try {
+                const dataUrl = await readFileAsDataURL(file);
+                updateContent((c) => {
+                  c.services[idx].iconSrc = dataUrl;
+                });
+                renderServicesAdmin();
+              } catch (e) {
+                alert("Не удалось прочитать файл иконки: " + e.message);
+              }
+            });
+          });
+
+        list.querySelectorAll('button[data-act="del-svc"]').forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idx = +btn.dataset.idx;
+            updateContent((c) => {
+              c.services.splice(idx, 1);
+            });
+            renderServicesAdmin();
+          });
+        });
+      }
+
+      /* ---------- GALLERY (file/URL + replace file) ---------- */
+      function renderGalleryAdmin() {
+        const list = document.getElementById("galleryList");
+        if (!list) return;
+        const c = getContent();
+        list.innerHTML = c.gallery
+          .map(
+            (g, idx) => `
+      <div class="row-inline">
+        <span class="badge">${g.type}</span>
+        ${
+          g.type === "image"
+            ? `<img src="${g.src}" alt="${
+                g.alt || ""
+              }" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--line)">`
+            : ""
+        }
+        ${
+          g.type === "video"
+            ? `<video src="${g.src}" style="width:100px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--line)" muted></video>`
+            : ""
+        }
+        <input value="${
+          g.src
+        }" data-idx="${idx}" data-field="src" style="min-width:360px">
+        <input value="${g.alt || ""}" data-idx="${idx}" data-field="alt">
+        <input type="file" data-idx="${idx}" data-act="replace-file">
+        <button data-idx="${idx}" data-act="del" class="btn">Удалить</button>
+      </div>
+    `
+          )
+          .join("");
+
+        list.querySelectorAll("input[data-field]").forEach((inp) => {
+          inp.addEventListener("change", () => {
+            const idx = +inp.dataset.idx;
+            const field = inp.dataset.field;
+            updateContent((c) => {
+              c.gallery[idx][field] = inp.value;
+            });
+          });
+        });
+
+        list.querySelectorAll('button[data-act="del"]').forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idx = +btn.dataset.idx;
+            updateContent((c) => {
+              c.gallery.splice(idx, 1);
+            });
+            renderGalleryAdmin();
+          });
+        });
+
+        list
+          .querySelectorAll('input[type="file"][data-act="replace-file"]')
+          .forEach((fileInp) => {
+            const idx = +fileInp.dataset.idx;
+            const g = getContent().gallery[idx];
+            setAcceptByType(fileInp, g.type);
+            fileInp.addEventListener("change", async () => {
+              const file = fileInp.files?.[0];
+              if (!file) return;
+              try {
+                const dataUrl = await readFileAsDataURL(file);
+                updateContent((c) => {
+                  c.gallery[idx].src = dataUrl;
+                });
+                renderGalleryAdmin();
+              } catch (e) {
+                alert("Не удалось прочитать файл: " + e.message);
+              }
+            });
+          });
+      }
+
+      /* ---------- PACKAGES ---------- */
+      function renderPackagesAdmin() {
+        const list = document.getElementById("packagesList");
+        if (!list) return;
+        const c = getContent();
+        list.innerHTML = c.packages
+          .map(
+            (p, idx) => `
+      <div class="row-inline">
+        <input value="${
+          p.name?.ru || ""
+        }" data-idx="${idx}" data-field="name.ru" placeholder="Название RU">
+        <input value="${
+          p.name?.az || ""
+        }" data-idx="${idx}" data-field="name.az" placeholder="Ad AZ">
+        <input type="number" value="${
+          p.price
+        }" data-idx="${idx}" data-field="price">
+        <input value="${
+          p.currency || ""
+        }" data-idx="${idx}" data-field="currency">
+      </div>
+      <div class="row-inline" style="margin-top:-6px">
+        <input value="${(p.features?.ru || []).join(
+          "; "
+        )}" data-idx="${idx}" data-field="features.ru" style="min-width:240px" placeholder="Фичи RU через ;">
+        <input value="${(p.features?.az || []).join(
+          "; "
+        )}" data-idx="${idx}" data-field="features.az" style="min-width:240px" placeholder="Fitur AZ ; ilə">
+        <button data-idx="${idx}" data-act="del" class="btn">Удалить</button>
+      </div>
+      <hr class="sep">
+    `
+          )
+          .join("");
+
+        list.querySelectorAll("input[data-field]").forEach((inp) => {
+          inp.addEventListener("change", () => {
+            const idx = +inp.dataset.idx;
+            const field = inp.dataset.field;
+            updateContent((c) => {
+              if (field === "price") c.packages[idx].price = +inp.value;
+              else if (field === "currency")
+                c.packages[idx].currency = inp.value;
+              else if (field === "name.ru") c.packages[idx].name.ru = inp.value;
+              else if (field === "name.az") c.packages[idx].name.az = inp.value;
+              else if (field === "features.ru")
+                c.packages[idx].features.ru = inp.value
+                  .split(";")
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+              else if (field === "features.az")
+                c.packages[idx].features.az = inp.value
+                  .split(";")
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+            });
+          });
+        });
+
+        list.querySelectorAll('button[data-act="del"]').forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idx = +btn.dataset.idx;
+            updateContent((c) => {
+              c.packages.splice(idx, 1);
+            });
+            renderPackagesAdmin();
+          });
+        });
+      }
+
+      /* ---------- FAQ ---------- */
+      function renderFaqAdmin() {
+        const list = document.getElementById("faqList");
+        if (!list) return;
+        const c = getContent();
+        list.innerHTML = c.faq
+          .map(
+            (x, idx) => `
+      <div class="row-inline">
+        <input value="${
+          x.q?.ru || ""
+        }" data-idx="${idx}" data-field="q.ru" placeholder="Вопрос RU">
+        <input value="${
+          x.q?.az || ""
+        }" data-idx="${idx}" data-field="q.az" placeholder="Sual AZ">
+      </div>
+      <div class="row-inline" style="margin-top:-6px">
+        <input value="${
+          x.a?.ru || ""
+        }" data-idx="${idx}" data-field="a.ru" placeholder="Ответ RU" style="min-width:320px">
+        <input value="${
+          x.a?.az || ""
+        }" data-idx="${idx}" data-field="a.az" placeholder="Cavab AZ" style="min-width:320px">
+        <button data-idx="${idx}" data-act="del" class="btn">Удалить</button>
+      </div>
+      <hr class="sep">
+    `
+          )
+          .join("");
+
+        list.querySelectorAll("input[data-field]").forEach((inp) => {
+          inp.addEventListener("change", () => {
+            const idx = +inp.dataset.idx;
+            const field = inp.dataset.field;
+            updateContent((c) => {
+              const [grp, loc] = field.split(".");
+              c.faq[idx][grp][loc] = inp.value;
+            });
+          });
+        });
+        list.querySelectorAll('button[data-act="del"]').forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idx = +btn.dataset.idx;
+            updateContent((c) => {
+              c.faq.splice(idx, 1);
+            });
+            renderFaqAdmin();
+          });
+        });
+      }
+
+      /* ---------- Brand / Hero (+ logo) ---------- */
+      async function handleBrandLogoSaveIfSelected() {
+        const file = document.getElementById("brandLogoFile")?.files?.[0];
+        if (!file) return;
+        const dataUrl = await readFileAsDataURL(file);
+        updateContent((c) => {
+          c.site.logoSrc = dataUrl;
+        });
+      }
+
+      function hydrateQuick() {
+        const c = getContent();
+        const bi = document.getElementById("brandInput");
+        const hru = document.getElementById("heroTitleRu");
+        const haz = document.getElementById("heroTitleAz");
+        const sru = document.getElementById("heroSubRu");
+        const saz = document.getElementById("heroSubAz");
+        if (bi) bi.value = c.site.brand || "";
+        if (hru) hru.value = c.locales?.ru?.hero_title || "";
+        if (haz) haz.value = c.locales?.az?.hero_title || "";
+        if (sru) sru.value = c.locales?.ru?.hero_subtitle || "";
+        if (saz) saz.value = c.locales?.az?.hero_subtitle || "";
+
+        const prev = document.getElementById("brandLogoPreview");
+        if (prev) {
+          const src = getContent().site.logoSrc;
+          if (src) {
+            prev.src = src;
+            prev.style.display = "inline-block";
+          } else {
+            prev.style.display = "none";
+          }
+        }
+      }
+
+      function bindBrandHero() {
+        document
+          .getElementById("btn-ru")
+          ?.addEventListener("click", () => setLocale("ru"));
+        document
+          .getElementById("btn-az")
+          ?.addEventListener("click", () => setLocale("az"));
+
+        const saveHeroBtn = document.getElementById("save-hero");
+        if (saveHeroBtn) {
+          saveHeroBtn.onclick = async () => {
+            const brand = document.getElementById("brandInput").value;
+            const hru = document.getElementById("heroTitleRu").value;
+            const haz = document.getElementById("heroTitleAz").value;
+            const sru = document.getElementById("heroSubRu").value;
+            const saz = document.getElementById("heroSubAz").value;
+
+            await handleBrandLogoSaveIfSelected();
+
+            updateContent((c) => {
+              c.site.brand = brand;
+              c.locales.ru.hero_title = hru;
+              c.locales.az.hero_title = haz;
+              c.locales.ru.hero_subtitle = sru;
+              c.locales.az.hero_subtitle = saz;
+            });
+            hydrateQuick();
+            alert("Сохранено.");
+          };
+        }
+
+        const logoFile = document.getElementById("brandLogoFile");
+        const logoPrev = document.getElementById("brandLogoPreview");
+        if (logoFile && logoPrev) {
+          logoFile.addEventListener("change", async () => {
+            const f = logoFile.files?.[0];
+            if (!f) {
+              logoPrev.style.display = "none";
+              return;
+            }
+            const dataUrl = await readFileAsDataURL(f);
+            logoPrev.src = dataUrl;
+            logoPrev.style.display = "inline-block";
+          });
+        }
+      }
+
+      /* ---------- Add New Service / Gallery entries ---------- */
+      function bindCreateService() {
+        const btn = document.getElementById("addService");
+        if (!btn) return;
+        btn.onclick = async () => {
+          const icon = (document.getElementById("svcIcon")?.value || "").trim();
+          const titleRu = (
+            document.getElementById("svcTitleRu")?.value || ""
+          ).trim();
+          const titleAz = (
+            document.getElementById("svcTitleAz")?.value || ""
+          ).trim();
+          const descRu = (
+            document.getElementById("svcDescRu")?.value || ""
+          ).trim();
+          const descAz = (
+            document.getElementById("svcDescAz")?.value || ""
+          ).trim();
+          const iconFile = document.getElementById("svcIconFile")?.files?.[0];
+          if (!titleRu || !titleAz) return alert("Укажите заголовки RU и AZ.");
+
+          let iconSrc;
+          if (iconFile) {
+            try {
+              iconSrc = await readFileAsDataURL(iconFile);
+            } catch (e) {
+              return alert("Не удалось прочитать файл иконки: " + e.message);
+            }
+          }
+
+          updateContent((c) => {
+            c.services.push({
+              icon: icon || "✨",
+              iconSrc, // может быть undefined
+              title: { ru: titleRu, az: titleAz },
+              desc: { ru: descRu, az: descAz },
+            });
+          });
+
+          [
+            "svcIcon",
+            "svcTitleRu",
+            "svcTitleAz",
+            "svcDescRu",
+            "svcDescAz",
+          ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+          });
+          if (document.getElementById("svcIconFile"))
+            document.getElementById("svcIconFile").value = "";
+          renderServicesAdmin();
+        };
+      }
+
+      function bindCreateGallery() {
+        const addGalBtn = document.getElementById("addGallery");
+        if (!addGalBtn) return;
+        addGalBtn.onclick = async () => {
+          const type = document.getElementById("galleryType").value;
+          const urlVal = document.getElementById("gallerySrc").value.trim();
+          const alt = document.getElementById("galleryAlt").value.trim();
+          const file = document.getElementById("galleryFile")?.files?.[0];
+
+          try {
+            let finalType = type;
+            let src;
+
+            if (file) {
+              if (file.type.startsWith("video/")) finalType = "video";
+              else finalType = "image";
+              src = await readFileAsDataURL(file);
+            } else {
+              if (!urlVal) return alert("Укажите URL или выберите файл.");
+              src = urlVal;
+            }
+
+            updateContent((c) => {
+              c.gallery.push({ type: finalType, src, alt });
+            });
+            if (document.getElementById("gallerySrc"))
+              document.getElementById("gallerySrc").value = "";
+            if (document.getElementById("galleryAlt"))
+              document.getElementById("galleryAlt").value = "";
+            if (document.getElementById("galleryFile"))
+              document.getElementById("galleryFile").value = "";
+            renderGalleryAdmin();
+          } catch (e) {
+            alert("Не удалось добавить файл: " + e.message);
+          }
+        };
+
+        const typeSel = document.getElementById("galleryType");
+        const fileInp = document.getElementById("galleryFile");
+        if (typeSel && fileInp) {
+          setAcceptByType(fileInp, typeSel.value);
+          typeSel.addEventListener("change", () =>
+            setAcceptByType(fileInp, typeSel.value)
+          );
+        }
+      }
+
+      /* ---------- ABOUT (Admin) ---------- */
+      function hydrateAboutHero() {
+        const c = getContent();
+        const a = c.about || {};
+        const titleRu = document.getElementById("aboutHeroTitleRu");
+        const titleAz = document.getElementById("aboutHeroTitleAz");
+        const subRu = document.getElementById("aboutHeroSubRu");
+        const subAz = document.getElementById("aboutHeroSubAz");
+        const prev = document.getElementById("aboutHeroPreview");
+        if (titleRu) titleRu.value = a.hero?.title?.ru || "";
+        if (titleAz) titleAz.value = a.hero?.title?.az || "";
+        if (subRu) subRu.value = a.hero?.subtitle?.ru || "";
+        if (subAz) subAz.value = a.hero?.subtitle?.az || "";
+        if (prev) {
+          if (a.hero?.imageSrc) {
+            prev.src = a.hero.imageSrc;
+            prev.style.display = "inline-block";
+          } else prev.style.display = "none";
+        }
+      }
+
+      function renderAboutStatsAdmin() {
+        const list = document.getElementById("aboutStatsList");
+        if (!list) return;
+        const a = getContent().about || {};
+        list.innerHTML = (a.stats || [])
+          .map(
+            (s, idx) => `
+      <div class="row-inline">
+        <input value="${
+          s.label?.ru || ""
+        }" data-idx="${idx}" data-field="label.ru" placeholder="Метка RU">
+        <input value="${
+          s.label?.az || ""
+        }" data-idx="${idx}" data-field="label.az" placeholder="Mətn AZ">
+        <input value="${
+          s.value || ""
+        }" data-idx="${idx}" data-field="value" style="width:120px" placeholder="Знач.">
+        <button class="btn" data-act="del-stat" data-idx="${idx}">Удалить</button>
+      </div>
+    `
+          )
+          .join("");
+
+        list.querySelectorAll("input").forEach((inp) => {
+          inp.addEventListener("change", () => {
+            const idx = +inp.dataset.idx;
+            const field = inp.dataset.field;
+            updateContent((c) => {
+              if (field === "value") c.about.stats[idx].value = inp.value;
+              else {
+                const [grp, loc] = field.split(".");
+                c.about.stats[idx][grp][loc] = inp.value;
+              }
+            });
+          });
+        });
+
+        list.querySelectorAll('button[data-act="del-stat"]').forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idx = +btn.dataset.idx;
+            updateContent((c) => {
+              c.about.stats.splice(idx, 1);
+            });
+            renderAboutStatsAdmin();
+          });
+        });
+      }
+
+      function renderAboutValuesAdmin() {
+        const list = document.getElementById("aboutValuesList");
+        if (!list) return;
+        const a = getContent().about || {};
+        list.innerHTML = (a.values || [])
+          .map(
+            (v, idx) => `
+      <div class="row-inline">
+        <input value="${
+          v.ru || ""
+        }" data-idx="${idx}" data-field="ru" style="min-width:360px">
+        <input value="${
+          v.az || ""
+        }" data-idx="${idx}" data-field="az" style="min-width:360px">
+        <button class="btn" data-act="del-val" data-idx="${idx}">Удалить</button>
+      </div>
+    `
+          )
+          .join("");
+
+        list.querySelectorAll("input").forEach((inp) => {
+          inp.addEventListener("change", () => {
+            const idx = +inp.dataset.idx;
+            const field = inp.dataset.field;
+            updateContent((c) => {
+              c.about.values[idx][field] = inp.value;
+            });
+          });
+        });
+
+        list.querySelectorAll('button[data-act="del-val"]').forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idx = +btn.dataset.idx;
+            updateContent((c) => {
+              c.about.values.splice(idx, 1);
+            });
+            renderAboutValuesAdmin();
+          });
+        });
+      }
+
+      function renderAboutTimelineAdmin() {
+        const list = document.getElementById("aboutTimelineList");
+        if (!list) return;
+        const a = getContent().about || {};
+        list.innerHTML = (a.timeline || [])
+          .map(
+            (t, idx) => `
+      <div class="row-inline">
+        <input value="${
+          t.year || ""
+        }" data-idx="${idx}" data-field="year" style="width:120px">
+        <input value="${
+          t.text?.ru || ""
+        }" data-idx="${idx}" data-field="text.ru" style="min-width:320px">
+        <input value="${
+          t.text?.az || ""
+        }" data-idx="${idx}" data-field="text.az" style="min-width:320px">
+        <button class="btn" data-act="del-tl" data-idx="${idx}">Удалить</button>
+      </div>
+    `
+          )
+          .join("");
+
+        list.querySelectorAll("input").forEach((inp) => {
+          inp.addEventListener("change", () => {
+            const idx = +inp.dataset.idx;
+            const field = inp.dataset.field;
+            updateContent((c) => {
+              if (field === "year") c.about.timeline[idx].year = inp.value;
+              else {
+                const [grp, loc] = field.split(".");
+                c.about.timeline[idx][grp][loc] = inp.value;
+              }
+            });
+          });
+        });
+
+        list.querySelectorAll('button[data-act="del-tl"]').forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idx = +btn.dataset.idx;
+            updateContent((c) => {
+              c.about.timeline.splice(idx, 1);
+            });
+            renderAboutTimelineAdmin();
+          });
+        });
+      }
+
+      function renderAboutTeamAdmin() {
+        const list = document.getElementById("aboutTeamList");
+        if (!list) return;
+        const a = getContent().about || {};
+        list.innerHTML = (a.team || [])
+          .map(
+            (m, idx) => `
+      <div class="row-inline">
+        ${
+          m.avatarSrc
+            ? `<img src="${m.avatarSrc}" style="width:36px;height:36px;object-fit:cover;border-radius:8px;border:1px solid var(--line)">`
+            : `<span class="badge">no photo</span>`
+        }
+        <input value="${
+          m.name || ""
+        }" data-idx="${idx}" data-field="name" placeholder="Имя">
+        <input value="${
+          m.role?.ru || ""
+        }" data-idx="${idx}" data-field="role.ru" placeholder="Роль RU">
+        <input value="${
+          m.role?.az || ""
+        }" data-idx="${idx}" data-field="role.az" placeholder="Rol AZ">
+        <input type="file" data-idx="${idx}" data-act="team-avatar" accept="image/*">
+        <button class="btn" data-act="del-team" data-idx="${idx}">Удалить</button>
+      </div>
+    `
+          )
+          .join("");
+
+        list.querySelectorAll("input[data-field]").forEach((inp) => {
+          inp.addEventListener("change", () => {
+            const idx = +inp.dataset.idx;
+            const field = inp.dataset.field;
+            updateContent((c) => {
+              if (field === "name") c.about.team[idx].name = inp.value;
+              else {
+                const [grp, loc] = field.split(".");
+                c.about.team[idx][grp][loc] = inp.value;
+              }
+            });
+          });
+        });
+
+        list
+          .querySelectorAll('input[type="file"][data-act="team-avatar"]')
+          .forEach((fileInp) => {
+            fileInp.addEventListener("change", async () => {
+              const f = fileInp.files?.[0];
+              if (!f) return;
+              const idx = +fileInp.dataset.idx;
+              const dataUrl = await readFileAsDataURL(f);
+              updateContent((c) => {
+                c.about.team[idx].avatarSrc = dataUrl;
+              });
+              renderAboutTeamAdmin();
+            });
+          });
+
+        list.querySelectorAll('button[data-act="del-team"]').forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idx = +btn.dataset.idx;
+            updateContent((c) => {
+              c.about.team.splice(idx, 1);
+            });
+            renderAboutTeamAdmin();
+          });
+        });
+      }
+
+      function bindAboutActions() {
+        const saveHero = document.getElementById("aboutHeroSave");
+        if (saveHero) {
+          saveHero.onclick = async () => {
+            const ruT = document
+              .getElementById("aboutHeroTitleRu")
+              .value.trim();
+            const azT = document
+              .getElementById("aboutHeroTitleAz")
+              .value.trim();
+            const ruS = document.getElementById("aboutHeroSubRu").value.trim();
+            const azS = document.getElementById("aboutHeroSubAz").value.trim();
+            const f = document.getElementById("aboutHeroImg").files?.[0];
+
+            let dataUrl;
+            if (f) {
+              dataUrl = await readFileAsDataURL(f);
+            }
+
+            updateContent((c) => {
+              c.about.hero.title.ru = ruT;
+              c.about.hero.title.az = azT;
+              c.about.hero.subtitle.ru = ruS;
+              c.about.hero.subtitle.az = azS;
+              if (dataUrl) c.about.hero.imageSrc = dataUrl;
+            });
+
+            const prev = document.getElementById("aboutHeroPreview");
+            if (prev && getContent().about.hero.imageSrc) {
+              prev.src = getContent().about.hero.imageSrc;
+              prev.style.display = "inline-block";
+            }
+            alert("Hero сохранён");
+          };
+        }
+
+        const addStat = document.getElementById("addStat");
+        if (addStat) {
+          addStat.onclick = () => {
+            const lr = document.getElementById("statLabelRu").value.trim();
+            const la = document.getElementById("statLabelAz").value.trim();
+            const vv = document.getElementById("statValue").value.trim();
+            if (!lr || !la || !vv) return alert("Заполните все поля KPI");
+            updateContent((c) => {
+              (c.about.stats ||= []).push({
+                label: { ru: lr, az: la },
+                value: vv,
+              });
+            });
+            ["statLabelRu", "statLabelAz", "statValue"].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.value = "";
+            });
+            renderAboutStatsAdmin();
+          };
+        }
+
+        const addVal = document.getElementById("addValue");
+        if (addVal) {
+          addVal.onclick = () => {
+            const vr = document.getElementById("valRu").value.trim();
+            const va = document.getElementById("valAz").value.trim();
+            if (!vr || !va) return alert("Укажите ценности RU и AZ");
+            updateContent((c) => {
+              (c.about.values ||= []).push({ ru: vr, az: va });
+            });
+            ["valRu", "valAz"].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.value = "";
+            });
+            renderAboutValuesAdmin();
+          };
+        }
+
+        const addTl = document.getElementById("addTimeline");
+        if (addTl) {
+          addTl.onclick = () => {
+            const y = document.getElementById("tlYear").value.trim();
+            const tr = document.getElementById("tlTextRu").value.trim();
+            const ta = document.getElementById("tlTextAz").value.trim();
+            if (!y || !tr || !ta) return alert("Заполните год и тексты RU/AZ");
+            updateContent((c) => {
+              (c.about.timeline ||= []).push({
+                year: y,
+                text: { ru: tr, az: ta },
+              });
+            });
+            ["tlYear", "tlTextRu", "tlTextAz"].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.value = "";
+            });
+            renderAboutTimelineAdmin();
+          };
+        }
+
+        const addTeam = document.getElementById("addTeam");
+        if (addTeam) {
+          addTeam.onclick = async () => {
+            const name = document.getElementById("teamName").value.trim();
+            const rr = document.getElementById("teamRoleRu").value.trim();
+            const ra = document.getElementById("teamRoleAz").value.trim();
+            const f = document.getElementById("teamAvatar").files?.[0];
+            if (!name || !rr || !ra)
+              return alert("Имя и роли RU/AZ обязательны");
+            let dataUrl = "";
+            if (f) {
+              dataUrl = await readFileAsDataURL(f);
+            }
+            updateContent((c) => {
+              (c.about.team ||= []).push({
+                name,
+                role: { ru: rr, az: ra },
+                avatarSrc: dataUrl,
+              });
+            });
+            ["teamName", "teamRoleRu", "teamRoleAz"].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.value = "";
+            });
+            const fileEl = document.getElementById("teamAvatar");
+            if (fileEl) fileEl.value = "";
+            renderAboutTeamAdmin();
+          };
+        }
+      }
+
+      function renderAboutAdmin() {
+        ensureAbout();
+        hydrateAboutHero();
+        renderAboutStatsAdmin();
+        renderAboutValuesAdmin();
+        renderAboutTimelineAdmin();
+        renderAboutTeamAdmin();
+      }
+
+      /* ---------- Init ---------- */
+      function init() {
+        // quick brand/hero
+        hydrateQuick();
+        bindBrandHero();
+
+        // services
+        renderServicesAdmin();
+        bindCreateService();
+
+        // gallery
+        renderGalleryAdmin();
+        bindCreateGallery();
+
+        // packages / faq
+        renderPackagesAdmin();
+        renderFaqAdmin();
+
+        // about
+        renderAboutAdmin();
+        bindAboutActions();
+      }
+
+      init();
+    </script>
+  </body>
+</html>
