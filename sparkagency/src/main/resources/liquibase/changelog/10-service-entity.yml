@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: 12-create-service-entity
+      author: yunis
+      changes:
+        - createTable:
+            tableName: service_entity
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: icon
+                  type: VARCHAR(255)
+
+              - column:
+                  name: icon_src
+                  type: TEXT
+
+              - column:
+                  name: title_ru
+                  type: VARCHAR(255)
+
+              - column:
+                  name: title_az
+                  type: VARCHAR(255)
+
+              - column:
+                  name: description_ru
+                  type: TEXT
+
+              - column:
+                  name: description_az
+                  type: TEXT

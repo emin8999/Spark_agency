@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - include:
+      file: liquibase/changelog/07-gallery-entity.yml
+  - include:
+      file: liquibase/changelog/01-about-entity.yml
+  - include:
+      file: liquibase/changelog/06-faq-entity.yml
+  - include:
+       file: liquibase/changelog/08-package-entity.yml
+  - include:
+       file: liquibase/changelog/09-siteconfig-entity.yml
+  - include:
+       file: liquibase/changelog/10-service-entity.yml

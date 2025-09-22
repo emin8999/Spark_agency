@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: 7-create-gallery-entity
+      author: Yunis
+      changes:
+        - createTable:
+            tableName: gallery_entity
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: src
+                  type: TEXT
+
+              - column:
+                  name: alt_text
+                  type: VARCHAR(255)
+
+              - column:
+                  name: cloudinary_public_id
+                  type: VARCHAR(255)

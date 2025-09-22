@@ -1,0 +1,81 @@
+databaseChangeLog:
+  - changeSet:
+      id: 8-create-package-entity
+      author: yunis
+      changes:
+        - createTable:
+            tableName: package_entity
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: name_ru
+                  type: VARCHAR(255)
+
+              - column:
+                  name: name_az
+                  type: VARCHAR(255)
+
+              - column:
+                  name: price
+                  type: DECIMAL(19,2)
+
+              - column:
+                  name: currency
+                  type: VARCHAR(50)
+
+  - changeSet:
+      id: 9-create-package-features-ru
+      author: yunis
+      changes:
+        - createTable:
+            tableName: package_features_ru
+            columns:
+              - column:
+                  name: package_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: feature
+                  type: VARCHAR(255)
+
+        - addForeignKeyConstraint:
+            baseTableName: package_features_ru
+            baseColumnNames: package_id
+            constraintName: fk_package_features_ru_package
+            referencedTableName: package_entity
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 10-create-package-features-az
+      author: yunis
+      changes:
+        - createTable:
+            tableName: package_features_az
+            columns:
+              - column:
+                  name: package_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: feature
+                  type: VARCHAR(255)
+
+        - addForeignKeyConstraint:
+            baseTableName: package_features_az
+            baseColumnNames: package_id
+            constraintName: fk_package_features_az_package
+            referencedTableName: package_entity
+            referencedColumnNames: id
+            onDelete: CASCADE

@@ -1,0 +1,174 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-create-about-entity
+      author: yunis
+      changes:
+        - createTable:
+            tableName: about_entity
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: hero_title_ru
+                  type: VARCHAR(255)
+              - column:
+                  name: hero_title_az
+                  type: VARCHAR(255)
+              - column:
+                  name: hero_subtitle_ru
+                  type: TEXT
+              - column:
+                  name: hero_subtitle_az
+                  type: TEXT
+              - column:
+                  name: hero_image_src
+                  type: TEXT
+
+  - changeSet:
+      id: 2-create-about-stats
+      author: yunis
+      changes:
+        - createTable:
+            tableName: about_stats
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: about_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: label_ru
+                  type: VARCHAR(255)
+              - column:
+                  name: label_az
+                  type: VARCHAR(255)
+              - column:
+                  name: value
+                  type: VARCHAR(255)
+        - addForeignKeyConstraint:
+            baseTableName: about_stats
+            baseColumnNames: about_id
+            constraintName: fk_about_stats_about
+            referencedTableName: about_entity
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 3-create-about-values
+      author: yunis
+      changes:
+        - createTable:
+            tableName: about_values
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: about_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: value_ru
+                  type: TEXT
+              - column:
+                  name: value_az
+                  type: TEXT
+        - addForeignKeyConstraint:
+            baseTableName: about_values
+            baseColumnNames: about_id
+            constraintName: fk_about_values_about
+            referencedTableName: about_entity
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 4-create-about-timeline
+      author: yunis
+      changes:
+        - createTable:
+            tableName: about_timeline
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: about_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: year
+                  type: VARCHAR(50)
+              - column:
+                  name: text_ru
+                  type: TEXT
+              - column:
+                  name: text_az
+                  type: TEXT
+        - addForeignKeyConstraint:
+            baseTableName: about_timeline
+            baseColumnNames: about_id
+            constraintName: fk_about_timeline_about
+            referencedTableName: about_entity
+            referencedColumnNames: id
+            onDelete: CASCADE
+            
+  - changeSet:
+      id: 5-create-about-team
+      author: yunis
+      changes:
+        - createTable:
+            tableName: about_team
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: about_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: role_ru
+                  type: VARCHAR(255)
+              - column:
+                  name: role_az
+                  type: VARCHAR(255)
+              - column:
+                  name: avatar_src
+                  type: TEXT
+        - addForeignKeyConstraint:
+            baseTableName: about_team
+            baseColumnNames: about_id
+            constraintName: fk_about_team_about
+            referencedTableName: about_entity
+            referencedColumnNames: id
+            onDelete: CASCADE          

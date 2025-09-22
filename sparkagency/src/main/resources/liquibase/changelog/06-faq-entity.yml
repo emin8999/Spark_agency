@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: 6-create-faq-entity
+      author: Yunis
+      changes:
+        - createTable:
+            tableName: faq_entity
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: question_ru
+                  type: TEXT
+
+              - column:
+                  name: question_az
+                  type: TEXT
+
+              - column:
+                  name: answer_ru
+                  type: TEXT
+
+              - column:
+                  name: answer_az
+                  type: TEXT

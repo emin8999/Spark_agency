@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/myservicedb
+    username: myservice
+    password: AEmin_899_@!
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: mynewschema
+    show-sql: true
+    open-in-view: false
+    hibernate:
+      ddl-auto: create
+
+  liquibase:
+    enabled: true
+    change-log: classpath:/liquibase/changelog-master.yml
+    database-change-log-table: DATABASECHANGELOG
+    database-change-log-lock-table: DATABASECHANGELOGLOCK
+    default-schema: mynewschema

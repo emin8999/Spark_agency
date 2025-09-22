@@ -1,0 +1,39 @@
+databaseChangeLog:
+  - changeSet:
+      id: 11-create-siteconfig-entity
+      author: Yunis
+      changes:
+        - createTable:
+            tableName: siteconfig_entity
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: brand_name
+                  type: VARCHAR(255)
+
+              - column:
+                  name: logo_src
+                  type: TEXT
+
+              - column:
+                  name: hero_title_ru
+                  type: VARCHAR(255)
+
+              - column:
+                  name: hero_title_az
+                  type: VARCHAR(255)
+
+              - column:
+                  name: hero_subtitle_ru
+                  type: TEXT
+
+              - column:
+                  name: hero_subtitle_az
+                  type: TEXT
