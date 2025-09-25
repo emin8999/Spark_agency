@@ -1,5 +1,6 @@
 // assets/js/app.js
 import { getContent, onContentChange, updateContent } from "./i18n.js";
+import { syncAllFromAPI } from "./apiClient.js";
 
 /* ---------- Ensure "about" exists with sensible defaults ---------- */
 function ensureAbout() {
@@ -256,8 +257,13 @@ export function renderAll() {
   renderAboutTeam();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   ensureAbout();
+  try {
+    await syncAllFromAPI();
+  } catch (_) {
+    // ignore API errors; fallback to local content
+  }
   renderAll();
   onContentChange(() => {
     renderAll();
