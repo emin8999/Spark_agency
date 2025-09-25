@@ -5,10 +5,10 @@ function icon(name) {
   const map = {
     instagram:
       '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7zm12 2a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10z"/></svg>',
-    facebook:
-      '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13 22V12h3l1-4h-4V6c0-1.084.916-2 2-2h2V0h-3a5 5 0 0 0-5 5v3H6v4h3v10h4z"/></svg>',
-    tiktok:
-      '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 3c1 2 2 3 4 3v4c-2 0-4-1-4-1v6a6 6 0 1 1-6-6h1v4h-1a2 2 0 1 0 2 2V3h4z"/></svg>',
+    // facebook:
+    //   '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13 22V12h3l1-4h-4V6c0-1.084.916-2 2-2h2V0h-3a5 5 0 0 0-5 5v3H6v4h3v10h4z"/></svg>',
+    // tiktok:
+    //   '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M16 3c1 2 2 3 4 3v4c-2 0-4-1-4-1v6a6 6 0 1 1-6-6h1v4h-1a2 2 0 1 0 2 2V3h4z"/></svg>',
   };
   return map[name] || "";
 }
