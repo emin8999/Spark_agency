@@ -227,20 +227,29 @@ function renderAboutTeam() {
   root.innerHTML = (a.team || [])
     .map(
       (m) => `
-    <div class="card" style="grid-column: span 4; display:flex; gap:12px; align-items:center;">
+    <div class="card team-card" data-team-card>
       ${
         m.avatarSrc
-          ? `<img src="${m.avatarSrc}" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">`
-          : `<div class="badge">No photo</div>`
+          ? `<img src="${m.avatarSrc}" alt="" class="team-card__avatar" loading="lazy">`
+          : `<div class="badge team-card__placeholder">No photo</div>`
       }
-      <div>
-        <div style="font-weight:700">${m.name || ""}</div>
-        <div style="color:var(--muted)">${m.role?.[L] || ""}</div>
+      <div class="team-card__body">
+        <div class="team-card__name">${m.name || ""}</div>
+        <div class="team-card__role">${m.role?.[L] || ""}</div>
       </div>
     </div>
   `
     )
     .join("");
+
+  const cards = root.querySelectorAll("[data-team-card]");
+  cards.forEach((card) => {
+    card.addEventListener("click", () => {
+      const isAlreadyExpanded = card.classList.contains("is-expanded");
+      cards.forEach((c) => c.classList.remove("is-expanded"));
+      if (!isAlreadyExpanded) card.classList.add("is-expanded");
+    });
+  });
 }
 
 /* ---------- Orchestrator ---------- */

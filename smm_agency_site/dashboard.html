@@ -112,6 +112,49 @@
         </div>
 
         <div class="card">
+          <h3>Footer</h3>
+          <div class="row">
+            <label>Footer qeyd (RU)</label>
+            <textarea
+              id="footerNoteRu"
+              placeholder="© 2025 Spark Agency MMC. Bütün hüquqlar qorunur."
+            ></textarea>
+          </div>
+          <div class="row">
+            <label>Footer qeyd (AZ)</label>
+            <textarea
+              id="footerNoteAz"
+              placeholder="© 2025 Spark Agency MMC. Bütün hüquqlar qorunur."
+            ></textarea>
+          </div>
+          <div class="row-inline">
+            <button id="saveFooterNote" class="btn">
+              Footer mətnini yadda saxla
+            </button>
+          </div>
+          <hr class="sep" />
+          <h4>Sosial linklər</h4>
+          <div id="footerSocialList" class="list"></div>
+          <div class="row-inline">
+            <input
+              id="footerSocialIcon"
+              placeholder="instagram"
+              style="width: 140px"
+            />
+            <input
+              id="footerSocialUrl"
+              placeholder="https://instagram.com/spark"
+              style="min-width: 320px"
+            />
+            <button id="addFooterSocial" class="btn">Link əlavə et</button>
+          </div>
+          <span class="help"
+            >İkon adları `assets/js/headerFooter.js` faylındakı `icon` funksiyası
+            ilə uyğun olmalıdır.</span
+          >
+        </div>
+
+        <div class="card">
           <h3>Qalereya (şəkillər və videolar)</h3>
           <div id="galleryList" class="list"></div>
           <div class="row-inline">
@@ -368,6 +411,65 @@
             };
           });
         }
+      }
+
+      /* ---------- FOOTER (note + socials) ---------- */
+      function renderFooterSocialsAdmin() {
+        const list = document.getElementById("footerSocialList");
+        if (!list) return;
+        const socials = getContent().site.socials || [];
+
+        if (!socials.length) {
+          list.innerHTML = "<span class=\"help\">Hələ link yoxdur.</span>";
+          return;
+        }
+
+        list.innerHTML = socials
+          .map(
+            (s, idx) => `
+      <div class="row-inline">
+        <input value="${s.icon || ""}" data-idx="${idx}" data-field="icon" placeholder="instagram" style="width:140px">
+        <input value="${s.url || ""}" data-idx="${idx}" data-field="url" placeholder="https://..." style="min-width:320px">
+        <button data-idx="${idx}" data-act="del-footer-social" class="btn">Удалить</button>
+      </div>
+    `
+          )
+          .join("");
+
+        list.querySelectorAll("input[data-field]").forEach((inp) => {
+          inp.addEventListener("change", () => {
+            const idx = +inp.dataset.idx;
+            const field = inp.dataset.field;
+            const value = inp.value.trim();
+            updateContent((c) => {
+              if (!Array.isArray(c.site.socials)) c.site.socials = [];
+              if (!c.site.socials[idx]) c.site.socials[idx] = { icon: "", url: "" };
+              c.site.socials[idx][field] = value;
+            });
+          });
+        });
+
+        list
+          .querySelectorAll('button[data-act="del-footer-social"]')
+          .forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const idx = +btn.dataset.idx;
+              updateContent((c) => {
+                if (!Array.isArray(c.site.socials)) return;
+                c.site.socials.splice(idx, 1);
+              });
+              renderFooterSocialsAdmin();
+            });
+          });
+      }
+
+      function hydrateFooter() {
+        const ru = document.getElementById("footerNoteRu");
+        const az = document.getElementById("footerNoteAz");
+        const c = getContent();
+        if (ru) ru.value = c.locales?.ru?.footer_note || "";
+        if (az) az.value = c.locales?.az?.footer_note || "";
+        renderFooterSocialsAdmin();
       }
 
       /* ---------- SERVICES (CRUD + icon file) ---------- */
@@ -731,6 +833,40 @@
             logoPrev.src = dataUrl;
             logoPrev.style.display = "inline-block";
           });
+        }
+      }
+
+      function bindFooterActions() {
+        const saveFooter = document.getElementById("saveFooterNote");
+        if (saveFooter) {
+          saveFooter.onclick = () => {
+            const ru = document.getElementById("footerNoteRu")?.value.trim() || "";
+            const az = document.getElementById("footerNoteAz")?.value.trim() || "";
+            updateContent((c) => {
+              if (!c.locales.ru) c.locales.ru = {};
+              if (!c.locales.az) c.locales.az = {};
+              c.locales.ru.footer_note = ru;
+              c.locales.az.footer_note = az;
+            });
+            alert("Footer mətnləri yadda saxlanıldı.");
+          };
+        }
+
+        const addSocial = document.getElementById("addFooterSocial");
+        if (addSocial) {
+          addSocial.onclick = () => {
+            const icon = document.getElementById("footerSocialIcon")?.value.trim();
+            const url = document.getElementById("footerSocialUrl")?.value.trim();
+            if (!icon || !url) return alert("İkon və link daxil edin.");
+            updateContent((c) => {
+              (c.site.socials ||= []).push({ icon, url });
+            });
+            const iconInput = document.getElementById("footerSocialIcon");
+            const urlInput = document.getElementById("footerSocialUrl");
+            if (iconInput) iconInput.value = "";
+            if (urlInput) urlInput.value = "";
+            renderFooterSocialsAdmin();
+          };
         }
       }
 
@@ -1203,6 +1339,10 @@
         // quick brand/hero
         hydrateQuick();
         bindBrandHero();
+
+        // footer
+        hydrateFooter();
+        bindFooterActions();
 
         // services
         renderServicesAdmin();

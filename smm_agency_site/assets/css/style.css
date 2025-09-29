@@ -94,6 +94,61 @@ a {
   border-radius: 18px;
   padding: 18px;
 }
+.team-card {
+  grid-column: span 4;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: grid-column 0.25s ease, padding 0.25s ease, gap 0.25s ease,
+    transform 0.25s ease;
+}
+.team-card:hover {
+  transform: translateY(-2px);
+}
+.team-card__avatar {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  transition: width 0.25s ease, height 0.25s ease, border-radius 0.25s ease;
+}
+.team-card__placeholder {
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.25s ease, height 0.25s ease, border-radius 0.25s ease;
+}
+.team-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.team-card__name {
+  font-weight: 700;
+}
+.team-card__role {
+  color: var(--muted);
+  font-size: 14px;
+}
+.team-card.is-expanded {
+  grid-column: span 12;
+  padding: 26px;
+  gap: 18px;
+  align-items: flex-start;
+}
+.team-card.is-expanded .team-card__avatar,
+.team-card.is-expanded .team-card__placeholder {
+  width: 110px;
+  height: 110px;
+  border-radius: 18px;
+}
+.team-card.is-expanded .team-card__body {
+  gap: 8px;
+}
 .services .item {
   grid-column: span 6;
   display: flex;
