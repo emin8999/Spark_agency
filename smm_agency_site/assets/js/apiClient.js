@@ -3,7 +3,7 @@
 
 import { updateContent, getContent } from "./i18n.js";
 
-const BASE = window.API_BASE_URL || ""; // e.g., "http://localhost:8080"
+const BASE = window.API_BASE_URL || "http://sparkagencyllc.com/sparkagency"; // e.g., "http://localhost:8080"
 
 async function safeJson(resp) {
   if (!resp.ok) throw new Error(`${resp.status}`);
