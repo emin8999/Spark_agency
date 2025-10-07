@@ -149,8 +149,8 @@
             <button id="addFooterSocial" class="btn">Link əlavə et</button>
           </div>
           <span class="help"
-            >İkon adları `assets/js/headerFooter.js` faylındakı `icon` funksiyası
-            ilə uyğun olmalıdır.</span
+            >İkon adları `assets/js/headerFooter.js` faylındakı `icon`
+            funksiyası ilə uyğun olmalıdır.</span
           >
         </div>
 
@@ -317,9 +317,7 @@
             <input id="teamAvatar" type="file" accept="image/*" />
             <button id="addTeam" class="btn">Üzv əlavə et</button>
           </div>
-          <span class="help"
-            >Bütün təsvirlər Data URL kimi saxlanılır.</span
-          >
+          <span class="help">Bütün təsvirlər Data URL kimi saxlanılır.</span>
         </div>
 
         <div class="card">
@@ -410,12 +408,11 @@
         syncing = true;
         try {
           await syncAllFromAPI();
+          renderAllSections();
           if (!silent) console.info("Контент обновлён из API");
         } catch (error) {
-          if (!silent) notifyError("Не удалось обновить данные с сервера", error);
-          else console.error("Не удалось обновить данные с сервера", error);
+          notifyError("Не удалось обновить данные с сервера", error);
         } finally {
-          renderAllSections();
           syncing = false;
         }
       }
@@ -461,7 +458,7 @@
         const socials = getContent().site.socials || [];
 
         if (!socials.length) {
-          list.innerHTML = "<span class=\"help\">Hələ link yoxdur.</span>";
+          list.innerHTML = '<span class="help">Hələ link yoxdur.</span>';
           return;
         }
 
@@ -469,8 +466,12 @@
           .map(
             (s, idx) => `
       <div class="row-inline">
-        <input value="${s.icon || ""}" data-idx="${idx}" data-field="icon" placeholder="instagram" style="width:140px">
-        <input value="${s.url || ""}" data-idx="${idx}" data-field="url" placeholder="https://..." style="min-width:320px">
+        <input value="${
+          s.icon || ""
+        }" data-idx="${idx}" data-field="icon" placeholder="instagram" style="width:140px">
+        <input value="${
+          s.url || ""
+        }" data-idx="${idx}" data-field="url" placeholder="https://..." style="min-width:320px">
         <button data-idx="${idx}" data-act="del-footer-social" class="btn">Удалить</button>
       </div>
     `
@@ -484,7 +485,8 @@
             const value = inp.value.trim();
             updateContent((c) => {
               if (!Array.isArray(c.site.socials)) c.site.socials = [];
-              if (!c.site.socials[idx]) c.site.socials[idx] = { icon: "", url: "" };
+              if (!c.site.socials[idx])
+                c.site.socials[idx] = { icon: "", url: "" };
               c.site.socials[idx][field] = value;
             });
           });
@@ -1056,8 +1058,10 @@
         const saveFooter = document.getElementById("saveFooterNote");
         if (saveFooter) {
           saveFooter.onclick = () => {
-            const ru = document.getElementById("footerNoteRu")?.value.trim() || "";
-            const az = document.getElementById("footerNoteAz")?.value.trim() || "";
+            const ru =
+              document.getElementById("footerNoteRu")?.value.trim() || "";
+            const az =
+              document.getElementById("footerNoteAz")?.value.trim() || "";
             updateContent((c) => {
               if (!c.locales.ru) c.locales.ru = {};
               if (!c.locales.az) c.locales.az = {};
@@ -1071,8 +1075,12 @@
         const addSocial = document.getElementById("addFooterSocial");
         if (addSocial) {
           addSocial.onclick = () => {
-            const icon = document.getElementById("footerSocialIcon")?.value.trim();
-            const url = document.getElementById("footerSocialUrl")?.value.trim();
+            const icon = document
+              .getElementById("footerSocialIcon")
+              ?.value.trim();
+            const url = document
+              .getElementById("footerSocialUrl")
+              ?.value.trim();
             if (!icon || !url) return alert("İkon və link daxil edin.");
             updateContent((c) => {
               (c.site.socials ||= []).push({ icon, url });
@@ -1650,99 +1658,84 @@
             const azS = document.getElementById("aboutHeroSubAz").value.trim();
             const f = document.getElementById("aboutHeroImg").files?.[0];
 
-            try {
-              await AboutAPI.updateHero({
-                heroTitleRu: ruT,
-                heroTitleAz: azT,
-                heroSubtitleRu: ruS,
-                heroSubtitleAz: azS,
-                heroImageSrc: getContent().about?.hero?.imageSrc || "",
-              });
-
-              if (f) {
-                const dataUrl = await readFileAsDataURL(f);
-                await AboutAPI.uploadHeroImage(dataUrl);
-                const fileInput = document.getElementById("aboutHeroImg");
-                if (fileInput) fileInput.value = "";
-              }
-
-              await refreshAllData();
-              const prev = document.getElementById("aboutHeroPreview");
-              if (prev && getContent().about?.hero?.imageSrc) {
-                prev.src = getContent().about.hero.imageSrc;
-                prev.style.display = "inline-block";
-              }
-              alert("Hero сохранён");
-            } catch (error) {
-              notifyError("Не удалось сохранить блок Hero", error);
+            let dataUrl;
+            if (f) {
+              dataUrl = await readFileAsDataURL(f);
             }
+
+            updateContent((c) => {
+              c.about.hero.title.ru = ruT;
+              c.about.hero.title.az = azT;
+              c.about.hero.subtitle.ru = ruS;
+              c.about.hero.subtitle.az = azS;
+              if (dataUrl) c.about.hero.imageSrc = dataUrl;
+            });
+
+            const prev = document.getElementById("aboutHeroPreview");
+            if (prev && getContent().about.hero.imageSrc) {
+              prev.src = getContent().about.hero.imageSrc;
+              prev.style.display = "inline-block";
+            }
+            alert("Hero сохранён");
           };
         }
 
         const addStat = document.getElementById("addStat");
         if (addStat) {
-          addStat.onclick = async () => {
+          addStat.onclick = () => {
             const lr = document.getElementById("statLabelRu").value.trim();
             const la = document.getElementById("statLabelAz").value.trim();
             const vv = document.getElementById("statValue").value.trim();
             if (!lr || !la || !vv) return alert("Заполните все поля KPI");
-            try {
-              await AboutAPI.createStat({
-                labelRu: lr,
-                labelAz: la,
+            updateContent((c) => {
+              (c.about.stats ||= []).push({
+                label: { ru: lr, az: la },
                 value: vv,
               });
-              ["statLabelRu", "statLabelAz", "statValue"].forEach((id) => {
-                const el = document.getElementById(id);
-                if (el) el.value = "";
-              });
-              await refreshAllData();
-            } catch (error) {
-              notifyError("Не удалось добавить KPI", error);
-            }
+            });
+            ["statLabelRu", "statLabelAz", "statValue"].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.value = "";
+            });
+            renderAboutStatsAdmin();
           };
         }
 
         const addVal = document.getElementById("addValue");
         if (addVal) {
-          addVal.onclick = async () => {
+          addVal.onclick = () => {
             const vr = document.getElementById("valRu").value.trim();
             const va = document.getElementById("valAz").value.trim();
             if (!vr || !va) return alert("Укажите ценности RU и AZ");
-            try {
-              await AboutAPI.createValue({ valueRu: vr, valueAz: va });
-              ["valRu", "valAz"].forEach((id) => {
-                const el = document.getElementById(id);
-                if (el) el.value = "";
-              });
-              await refreshAllData();
-            } catch (error) {
-              notifyError("Не удалось добавить ценность", error);
-            }
+            updateContent((c) => {
+              (c.about.values ||= []).push({ ru: vr, az: va });
+            });
+            ["valRu", "valAz"].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.value = "";
+            });
+            renderAboutValuesAdmin();
           };
         }
 
         const addTl = document.getElementById("addTimeline");
         if (addTl) {
-          addTl.onclick = async () => {
+          addTl.onclick = () => {
             const y = document.getElementById("tlYear").value.trim();
             const tr = document.getElementById("tlTextRu").value.trim();
             const ta = document.getElementById("tlTextAz").value.trim();
             if (!y || !tr || !ta) return alert("Заполните год и тексты RU/AZ");
-            try {
-              await AboutAPI.createTimeline({
+            updateContent((c) => {
+              (c.about.timeline ||= []).push({
                 year: y,
-                textRu: tr,
-                textAz: ta,
+                text: { ru: tr, az: ta },
               });
-              ["tlYear", "tlTextRu", "tlTextAz"].forEach((id) => {
-                const el = document.getElementById(id);
-                if (el) el.value = "";
-              });
-              await refreshAllData();
-            } catch (error) {
-              notifyError("Не удалось добавить событие", error);
-            }
+            });
+            ["tlYear", "tlTextRu", "tlTextAz"].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.value = "";
+            });
+            renderAboutTimelineAdmin();
           };
         }
 
@@ -1759,23 +1752,20 @@
             if (f) {
               dataUrl = await readFileAsDataURL(f);
             }
-            try {
-              await AboutAPI.createTeamMember({
+            updateContent((c) => {
+              (c.about.team ||= []).push({
                 name,
-                roleRu: rr,
-                roleAz: ra,
+                role: { ru: rr, az: ra },
                 avatarSrc: dataUrl,
               });
-              ["teamName", "teamRoleRu", "teamRoleAz"].forEach((id) => {
-                const el = document.getElementById(id);
-                if (el) el.value = "";
-              });
-              const fileEl = document.getElementById("teamAvatar");
-              if (fileEl) fileEl.value = "";
-              await refreshAllData();
-            } catch (error) {
-              notifyError("Не удалось добавить участника", error);
-            }
+            });
+            ["teamName", "teamRoleRu", "teamRoleAz"].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.value = "";
+            });
+            const fileEl = document.getElementById("teamAvatar");
+            if (fileEl) fileEl.value = "";
+            renderAboutTeamAdmin();
           };
         }
       }
@@ -1790,17 +1780,30 @@
       }
 
       /* ---------- Init ---------- */
-      async function init() {
+      function init() {
+        // quick brand/hero
+        hydrateQuick();
         bindBrandHero();
-        bindFooterActions();
-        bindCreateService();
-        bindCreateGallery();
-        bindCreatePackage();
-        bindCreateFaq();
-        bindAboutActions();
 
-        renderAllSections();
-        await refreshAllData({ silent: true });
+        // footer
+        hydrateFooter();
+        bindFooterActions();
+
+        // services
+        renderServicesAdmin();
+        bindCreateService();
+
+        // gallery
+        renderGalleryAdmin();
+        bindCreateGallery();
+
+        // packages / faq
+        renderPackagesAdmin();
+        renderFaqAdmin();
+
+        // about
+        renderAboutAdmin();
+        bindAboutActions();
       }
 
       init();
