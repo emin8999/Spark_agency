@@ -272,14 +272,23 @@ export function renderAll() {
   renderAboutTeam();
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  ensureAbout();
+let syncing = false;
+async function refreshFromAPI({ silent = false } = {}) {
+  if (syncing) return;
+  syncing = true;
   try {
     await syncAllFromAPI();
-  } catch (_) {
-    // ignore API errors; fallback to local content
+  } catch (err) {
+    if (!silent) console.error("Failed to sync content", err);
+  } finally {
+    renderAll();
+    syncing = false;
   }
-  renderAll();
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  ensureAbout();
+  await refreshFromAPI({ silent: true });
   onContentChange(() => {
     renderAll();
   });
@@ -310,3 +319,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.body.classList.add('loaded');
   }, 100);
 });
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refreshFromAPI({ silent: true });
+});
+window.addEventListener("focus", () => refreshFromAPI({ silent: true }));
