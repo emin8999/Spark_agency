@@ -6,8 +6,45 @@ import { updateContent, getContent } from "./i18n.js";
 const BASE = window.API_BASE_URL || "http://sparkagencyllc.com/sparkagency"; // e.g., "http://localhost:8080"
 
 async function safeJson(resp) {
-  if (!resp.ok) throw new Error(`${resp.status}`);
-  return resp.json();
+  if (!resp.ok) {
+    const message = await resp.text().catch(() => "");
+    throw new Error(`${resp.status} ${message}`.trim());
+  }
+  if (resp.status === 204) return null;
+  const text = await resp.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.warn("Failed to parse JSON response", e);
+    return null;
+  }
+}
+
+async function jsonRequest(path, { method = "GET", body, headers = {} } = {}) {
+  const opts = {
+    method,
+    headers: { ...headers },
+  };
+  if (body !== undefined) {
+    opts.body = JSON.stringify(body);
+    opts.headers["Content-Type"] = "application/json";
+  }
+  const resp = await fetch(`${BASE}${path}`, opts);
+  return safeJson(resp);
+}
+
+async function uploadFile(path, file, fieldName = "file", extraFields = {}) {
+  const form = new FormData();
+  form.append(fieldName, file);
+  Object.entries(extraFields).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) form.append(key, value);
+  });
+  const resp = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    body: form,
+  });
+  return safeJson(resp);
 }
 
 async function getServices() {
@@ -152,3 +189,73 @@ export async function syncAllFromAPI() {
   });
 }
 
+/* ---------- Services API ---------- */
+export const ServicesAPI = {
+  list: () => jsonRequest("/api/services/get"),
+  create: (payload) => jsonRequest("/api/services/create", { method: "POST", body: payload }),
+  update: (id, payload) => jsonRequest(`/api/services/update/${id}`, { method: "PUT", body: payload }),
+  delete: (id) => jsonRequest(`/api/services/delete/${id}`, { method: "DELETE" }),
+  uploadIcon: (id, file) => uploadFile(`/api/services/upload/${id}/icon`, file),
+};
+
+/* ---------- Packages API ---------- */
+export const PackagesAPI = {
+  list: () => jsonRequest("/api/packages/get"),
+  create: (payload) => jsonRequest("/api/packages/create", { method: "POST", body: payload }),
+  update: (id, payload) => jsonRequest(`/api/packages/update/${id}`, { method: "PUT", body: payload }),
+  delete: (id) => jsonRequest(`/api/packages/delete/${id}`, { method: "DELETE" }),
+};
+
+/* ---------- FAQ API ---------- */
+export const FaqAPI = {
+  list: () => jsonRequest("/api/faq/get"),
+  create: (payload) => jsonRequest("/api/faq/create", { method: "POST", body: payload }),
+  update: (id, payload) => jsonRequest(`/api/faq/update/${id}`, { method: "PUT", body: payload }),
+  delete: (id) => jsonRequest(`/api/faq/delete/${id}`, { method: "DELETE" }),
+};
+
+/* ---------- Site (Quick edit) API ---------- */
+export const SiteAPI = {
+  get: () => jsonRequest("/api/site/get"),
+  create: (payload) => jsonRequest("/api/site/create", { method: "POST", body: payload }),
+  update: (payload) => jsonRequest("/api/site/update", { method: "PUT", body: payload }),
+  uploadLogo: (file) => uploadFile("/api/site/logo", file),
+};
+
+/* ---------- Gallery API ---------- */
+export const GalleryAPI = {
+  list: () => jsonRequest("/api/gallery/get"),
+  create: (payload) => jsonRequest("/api/gallery/create", { method: "POST", body: payload }),
+  uploadImage: (file, { alt } = {}) =>
+    uploadFile("/api/gallery/upload/image", file, "file", { alt }),
+  uploadVideo: (file, { alt } = {}) =>
+    uploadFile("/api/gallery/upload/video", file, "file", { alt }),
+  delete: (id) => jsonRequest(`/api/gallery/delete/${id}`, { method: "DELETE" }),
+};
+
+/* ---------- About API ---------- */
+export const AboutAPI = {
+  get: () => jsonRequest("/api/about/get"),
+  updateHero: (payload) => jsonRequest("/api/about/hero", { method: "PUT", body: payload }),
+  // Stats
+  createStat: (payload) => jsonRequest("/api/about/create/stats", { method: "POST", body: payload }),
+  updateStat: (id, payload) => jsonRequest(`/api/about/update/stats/${id}`, { method: "PUT", body: payload }),
+  deleteStat: (id) => jsonRequest(`/api/about/delete/stats/${id}`, { method: "DELETE" }),
+  // Values
+  createValue: (payload) => jsonRequest("/api/about/create/values", { method: "POST", body: payload }),
+  updateValue: (id, payload) => jsonRequest(`/api/about/update/values/${id}`, { method: "PUT", body: payload }),
+  deleteValue: (id) => jsonRequest(`/api/about/delete/values/${id}`, { method: "DELETE" }),
+  // Timeline
+  createTimeline: (payload) => jsonRequest("/api/about/create/timeline", { method: "POST", body: payload }),
+  updateTimeline: (id, payload) => jsonRequest(`/api/about/update/timeline/${id}`, { method: "PUT", body: payload }),
+  deleteTimeline: (id) => jsonRequest(`/api/about/delete/timeline/${id}`, { method: "DELETE" }),
+  // Team
+  createTeamMember: (payload) => jsonRequest("/api/about/create/team", { method: "POST", body: payload }),
+  updateTeamMember: (id, payload) => jsonRequest(`/api/about/update/team/${id}`, { method: "PUT", body: payload }),
+  deleteTeamMember: (id) => jsonRequest(`/api/about/delete/team/${id}`, { method: "DELETE" }),
+  uploadTeamAvatar: (id, base64Data) =>
+    jsonRequest(`/api/about/create/team/${id}/avatar/base64`, {
+      method: "POST",
+      body: { base64Data },
+    }),
+};
