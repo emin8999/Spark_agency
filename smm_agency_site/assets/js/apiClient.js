@@ -51,6 +51,7 @@ async function getServices() {
   try {
     const data = await safeJson(await fetch(`${BASE}/api/services/get`));
     return (data || []).map((s) => ({
+      id: s.id,
       icon: s.icon || "",
       iconSrc: s.iconSrc || "",
       title: { ru: s.titleRu || "", az: s.titleAz || "" },
@@ -65,6 +66,7 @@ async function getPackages() {
   try {
     const data = await safeJson(await fetch(`${BASE}/api/packages/get`));
     return (data || []).map((p) => ({
+      id: p.id,
       name: { ru: p.nameRu || "", az: p.nameAz || "" },
       price: typeof p.price === "number" ? p.price : Number(p.price || 0),
       currency: p.currency || "",
@@ -79,6 +81,7 @@ async function getFaq() {
   try {
     const data = await safeJson(await fetch(`${BASE}/api/faq/get`));
     return (data || []).map((f) => ({
+      id: f.id,
       q: { ru: f.questionRu || "", az: f.questionAz || "" },
       a: { ru: f.answerRu || "", az: f.answerAz || "" },
     }));
@@ -91,6 +94,7 @@ async function getSite() {
   try {
     const s = await safeJson(await fetch(`${BASE}/api/site/get`));
     return {
+      id: s?.id,
       brand: s.brandName || "",
       logoSrc: s.logoSrc || "",
       hero: {
@@ -107,6 +111,7 @@ async function getGallery() {
   try {
     const data = await safeJson(await fetch(`${BASE}/api/gallery/get`));
     return (data || []).map((g) => ({
+      id: g.id,
       type: g.type || "image",
       src: g.src || "",
       alt: g.alt || "",
@@ -121,20 +126,28 @@ async function getAbout() {
     const a = await safeJson(await fetch(`${BASE}/api/about/get`));
     return {
       hero: {
+        id: a.id,
         title: { ru: a.heroTitleRu || "", az: a.heroTitleAz || "" },
         subtitle: { ru: a.heroSubtitleRu || "", az: a.heroSubtitleAz || "" },
         imageSrc: a.heroImageSrc || "",
       },
       stats: (a.stats || []).map((s) => ({
+        id: s.id,
         label: { ru: s.labelRu || "", az: s.labelAz || "" },
         value: s.value || "",
       })),
-      values: (a.values || []).map((v) => ({ ru: v.valueRu || "", az: v.valueAz || "" })),
+      values: (a.values || []).map((v) => ({
+        id: v.id,
+        ru: v.valueRu || "",
+        az: v.valueAz || "",
+      })),
       timeline: (a.timeline || []).map((t) => ({
+        id: t.id,
         year: t.year || "",
         text: { ru: t.textRu || "", az: t.textAz || "" },
       })),
       team: (a.team || []).map((m) => ({
+        id: m.id,
         name: m.name || "",
         role: { ru: m.roleRu || "", az: m.roleAz || "" },
         avatarSrc: m.avatarSrc || "",
@@ -159,6 +172,7 @@ export async function syncAllFromAPI() {
   updateContent((c) => {
     if (site) {
       c.site = c.site || {};
+      c.site.id = site.id;
       c.site.brand = site.brand;
       c.site.logoSrc = site.logoSrc;
       // hero text is stored inside locales
@@ -196,6 +210,11 @@ export const ServicesAPI = {
   update: (id, payload) => jsonRequest(`/api/services/update/${id}`, { method: "PUT", body: payload }),
   delete: (id) => jsonRequest(`/api/services/delete/${id}`, { method: "DELETE" }),
   uploadIcon: (id, file) => uploadFile(`/api/services/upload/${id}/icon`, file),
+  uploadIconBase64: (id, base64Data) =>
+    jsonRequest(`/api/services/upload/${id}/icon/base64`, {
+      method: "POST",
+      body: { base64Data },
+    }),
 };
 
 /* ---------- Packages API ---------- */
@@ -237,6 +256,11 @@ export const GalleryAPI = {
 export const AboutAPI = {
   get: () => jsonRequest("/api/about/get"),
   updateHero: (payload) => jsonRequest("/api/about/hero", { method: "PUT", body: payload }),
+  uploadHeroImage: (base64Data) =>
+    jsonRequest("/api/about/hero/image/base64", {
+      method: "POST",
+      body: { base64Data },
+    }),
   // Stats
   createStat: (payload) => jsonRequest("/api/about/create/stats", { method: "POST", body: payload }),
   updateStat: (id, payload) => jsonRequest(`/api/about/update/stats/${id}`, { method: "PUT", body: payload }),

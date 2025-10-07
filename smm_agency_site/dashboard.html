@@ -374,6 +374,15 @@
         updateContent,
         setLocale,
       } from "./assets/js/i18n.js";
+      import {
+        syncAllFromAPI,
+        ServicesAPI,
+        PackagesAPI,
+        FaqAPI,
+        SiteAPI,
+        GalleryAPI,
+        AboutAPI,
+      } from "./assets/js/apiClient.js";
 
       /* ---------- Helpers ---------- */
       function readFileAsDataURL(file) {
@@ -387,6 +396,38 @@
       function setAcceptByType(input, type) {
         if (!input) return;
         input.accept = type === "video" ? "video/*" : "image/*";
+      }
+
+      let syncing = false;
+
+      function notifyError(message, error) {
+        console.error(message, error);
+        alert(message);
+      }
+
+      async function refreshAllData({ silent = false } = {}) {
+        if (syncing) return;
+        syncing = true;
+        try {
+          await syncAllFromAPI();
+          if (!silent) console.info("Контент обновлён из API");
+        } catch (error) {
+          if (!silent) notifyError("Не удалось обновить данные с сервера", error);
+          else console.error("Не удалось обновить данные с сервера", error);
+        } finally {
+          renderAllSections();
+          syncing = false;
+        }
+      }
+
+      function renderAllSections() {
+        hydrateQuick();
+        hydrateFooter();
+        renderServicesAdmin();
+        renderGalleryAdmin();
+        renderPackagesAdmin();
+        renderFaqAdmin();
+        renderAboutAdmin();
       }
       function ensureAbout() {
         const c = getContent();
@@ -514,7 +555,7 @@
           .join("");
 
         list.querySelectorAll("input[data-field]").forEach((inp) => {
-          inp.addEventListener("change", () => {
+          inp.addEventListener("change", async () => {
             const idx = +inp.dataset.idx;
             const field = inp.dataset.field;
             updateContent((c) => {
@@ -524,6 +565,13 @@
                 c.services[idx][grp][loc] = inp.value;
               }
             });
+            try {
+              await persistService(idx);
+              await refreshAllData({ silent: true });
+            } catch (error) {
+              notifyError("Не удалось обновить сервис", error);
+              await refreshAllData({ silent: true });
+            }
           });
         });
 
@@ -534,27 +582,66 @@
               const file = fileInp.files?.[0];
               if (!file) return;
               const idx = +fileInp.dataset.idx;
+              const svc = getContent().services[idx];
+              if (!svc?.id) {
+                return notifyError(
+                  "Сначала сохраните сервис, чтобы загрузить иконку",
+                  ""
+                );
+              }
               try {
                 const dataUrl = await readFileAsDataURL(file);
                 updateContent((c) => {
                   c.services[idx].iconSrc = dataUrl;
                 });
                 renderServicesAdmin();
-              } catch (e) {
-                alert("Не удалось прочитать файл иконки: " + e.message);
+                await ServicesAPI.uploadIconBase64(svc.id, dataUrl);
+                await refreshAllData({ silent: true });
+              } catch (error) {
+                notifyError("Не удалось загрузить иконку", error);
+                await refreshAllData({ silent: true });
               }
             });
           });
 
         list.querySelectorAll('button[data-act="del-svc"]').forEach((btn) => {
-          btn.addEventListener("click", () => {
+          btn.addEventListener("click", async () => {
             const idx = +btn.dataset.idx;
-            updateContent((c) => {
-              c.services.splice(idx, 1);
-            });
-            renderServicesAdmin();
+            const svc = getContent().services[idx];
+            if (!svc?.id) {
+              updateContent((c) => {
+                c.services.splice(idx, 1);
+              });
+              renderServicesAdmin();
+              return;
+            }
+            try {
+              await ServicesAPI.delete(svc.id);
+            } catch (error) {
+              return notifyError("Не удалось удалить сервис", error);
+            }
+            await refreshAllData();
           });
         });
+      }
+
+      function serviceToDto(service) {
+        return {
+          icon: service.icon || "",
+          iconSrc: service.iconSrc || "",
+          titleRu: service.title?.ru || "",
+          titleAz: service.title?.az || "",
+          descriptionRu: service.desc?.ru || "",
+          descriptionAz: service.desc?.az || "",
+        };
+      }
+
+      async function persistService(idx) {
+        const svc = getContent().services[idx];
+        if (!svc) return;
+        const payload = serviceToDto(svc);
+        if (svc.id) await ServicesAPI.update(svc.id, payload);
+        else await ServicesAPI.create(payload);
       }
 
       /* ---------- GALLERY (file/URL + replace file) ---------- */
@@ -591,22 +678,38 @@
           .join("");
 
         list.querySelectorAll("input[data-field]").forEach((inp) => {
-          inp.addEventListener("change", () => {
+          inp.addEventListener("change", async () => {
             const idx = +inp.dataset.idx;
             const field = inp.dataset.field;
             updateContent((c) => {
               c.gallery[idx][field] = inp.value;
             });
+            try {
+              await upsertGalleryItem(idx);
+            } catch (error) {
+              notifyError("Не удалось обновить элемент галереи", error);
+              await refreshAllData({ silent: true });
+            }
           });
         });
 
         list.querySelectorAll('button[data-act="del"]').forEach((btn) => {
-          btn.addEventListener("click", () => {
+          btn.addEventListener("click", async () => {
             const idx = +btn.dataset.idx;
-            updateContent((c) => {
-              c.gallery.splice(idx, 1);
-            });
-            renderGalleryAdmin();
+            const item = getContent().gallery[idx];
+            if (!item?.id) {
+              updateContent((c) => {
+                c.gallery.splice(idx, 1);
+              });
+              renderGalleryAdmin();
+              return;
+            }
+            try {
+              await GalleryAPI.delete(item.id);
+              await refreshAllData();
+            } catch (error) {
+              notifyError("Не удалось удалить элемент галереи", error);
+            }
           });
         });
 
@@ -620,16 +723,42 @@
               const file = fileInp.files?.[0];
               if (!file) return;
               try {
-                const dataUrl = await readFileAsDataURL(file);
-                updateContent((c) => {
-                  c.gallery[idx].src = dataUrl;
-                });
-                renderGalleryAdmin();
-              } catch (e) {
-                alert("Не удалось прочитать файл: " + e.message);
+                await replaceGalleryFile(idx, file);
+              } catch (error) {
+                notifyError("Не удалось заменить файл галереи", error);
+                await refreshAllData({ silent: true });
               }
             });
           });
+      }
+
+      async function upsertGalleryItem(idx) {
+        const item = getContent().gallery[idx];
+        if (!item) return;
+        const payload = {
+          type: item.type,
+          src: item.src,
+          alt: item.alt,
+        };
+        if (!payload.src) return;
+        if (item.id) {
+          await GalleryAPI.create(payload);
+          await GalleryAPI.delete(item.id);
+        } else {
+          await GalleryAPI.create(payload);
+        }
+        await refreshAllData({ silent: true });
+      }
+
+      async function replaceGalleryFile(idx, file) {
+        const item = getContent().gallery[idx];
+        if (!item) return;
+        const isVideo = file.type.startsWith("video/") || item.type === "video";
+        const alt = item.alt || "";
+        if (isVideo) await GalleryAPI.uploadVideo(file, { alt });
+        else await GalleryAPI.uploadImage(file, { alt });
+        if (item.id) await GalleryAPI.delete(item.id);
+        await refreshAllData({ silent: true });
       }
 
       /* ---------- PACKAGES ---------- */
@@ -669,7 +798,7 @@
           .join("");
 
         list.querySelectorAll("input[data-field]").forEach((inp) => {
-          inp.addEventListener("change", () => {
+          inp.addEventListener("change", async () => {
             const idx = +inp.dataset.idx;
             const field = inp.dataset.field;
             updateContent((c) => {
@@ -689,18 +818,54 @@
                   .map((s) => s.trim())
                   .filter(Boolean);
             });
+            try {
+              await persistPackage(idx);
+              await refreshAllData({ silent: true });
+            } catch (error) {
+              notifyError("Не удалось обновить пакет", error);
+              await refreshAllData({ silent: true });
+            }
           });
         });
 
         list.querySelectorAll('button[data-act="del"]').forEach((btn) => {
-          btn.addEventListener("click", () => {
+          btn.addEventListener("click", async () => {
             const idx = +btn.dataset.idx;
-            updateContent((c) => {
-              c.packages.splice(idx, 1);
-            });
-            renderPackagesAdmin();
+            const pkg = getContent().packages[idx];
+            if (!pkg?.id) {
+              updateContent((c) => {
+                c.packages.splice(idx, 1);
+              });
+              renderPackagesAdmin();
+              return;
+            }
+            try {
+              await PackagesAPI.delete(pkg.id);
+              await refreshAllData();
+            } catch (error) {
+              notifyError("Не удалось удалить пакет", error);
+            }
           });
         });
+      }
+
+      function packageToDto(pkg) {
+        return {
+          nameRu: pkg.name?.ru || "",
+          nameAz: pkg.name?.az || "",
+          price: pkg.price ?? 0,
+          currency: pkg.currency || "",
+          featuresRu: pkg.features?.ru || [],
+          featuresAz: pkg.features?.az || [],
+        };
+      }
+
+      async function persistPackage(idx) {
+        const pkg = getContent().packages[idx];
+        if (!pkg) return;
+        const payload = packageToDto(pkg);
+        if (pkg.id) await PackagesAPI.update(pkg.id, payload);
+        else await PackagesAPI.create(payload);
       }
 
       /* ---------- FAQ ---------- */
@@ -734,34 +899,71 @@
           .join("");
 
         list.querySelectorAll("input[data-field]").forEach((inp) => {
-          inp.addEventListener("change", () => {
+          inp.addEventListener("change", async () => {
             const idx = +inp.dataset.idx;
             const field = inp.dataset.field;
             updateContent((c) => {
               const [grp, loc] = field.split(".");
               c.faq[idx][grp][loc] = inp.value;
             });
+            try {
+              await persistFaq(idx);
+              await refreshAllData({ silent: true });
+            } catch (error) {
+              notifyError("Не удалось обновить FAQ", error);
+              await refreshAllData({ silent: true });
+            }
           });
         });
         list.querySelectorAll('button[data-act="del"]').forEach((btn) => {
-          btn.addEventListener("click", () => {
+          btn.addEventListener("click", async () => {
             const idx = +btn.dataset.idx;
-            updateContent((c) => {
-              c.faq.splice(idx, 1);
-            });
-            renderFaqAdmin();
+            const item = getContent().faq[idx];
+            if (!item?.id) {
+              updateContent((c) => {
+                c.faq.splice(idx, 1);
+              });
+              renderFaqAdmin();
+              return;
+            }
+            try {
+              await FaqAPI.delete(item.id);
+              await refreshAllData();
+            } catch (error) {
+              notifyError("Не удалось удалить FAQ", error);
+            }
           });
         });
+      }
+
+      function faqToDto(item) {
+        return {
+          questionRu: item.q?.ru || "",
+          questionAz: item.q?.az || "",
+          answerRu: item.a?.ru || "",
+          answerAz: item.a?.az || "",
+        };
+      }
+
+      async function persistFaq(idx) {
+        const item = getContent().faq[idx];
+        if (!item) return;
+        const payload = faqToDto(item);
+        if (item.id) await FaqAPI.update(item.id, payload);
+        else await FaqAPI.create(payload);
       }
 
       /* ---------- Brand / Hero (+ logo) ---------- */
       async function handleBrandLogoSaveIfSelected() {
         const file = document.getElementById("brandLogoFile")?.files?.[0];
-        if (!file) return;
-        const dataUrl = await readFileAsDataURL(file);
-        updateContent((c) => {
-          c.site.logoSrc = dataUrl;
-        });
+        if (!file) return false;
+        try {
+          await SiteAPI.uploadLogo(file);
+          return true;
+        } catch (error) {
+          notifyError("Не удалось загрузить логотип", error);
+          return false;
+        }
       }
 
       function hydrateQuick() {
@@ -806,17 +1008,31 @@
             const sru = document.getElementById("heroSubRu").value;
             const saz = document.getElementById("heroSubAz").value;
 
-            await handleBrandLogoSaveIfSelected();
-
-            updateContent((c) => {
-              c.site.brand = brand;
-              c.locales.ru.hero_title = hru;
-              c.locales.az.hero_title = haz;
-              c.locales.ru.hero_subtitle = sru;
-              c.locales.az.hero_subtitle = saz;
-            });
-            hydrateQuick();
-            alert("Сохранено.");
+            const payload = {
+              brandName: brand,
+              heroTitleRu: hru,
+              heroTitleAz: haz,
+              heroSubtitleRu: sru,
+              heroSubtitleAz: saz,
+            };
+            const siteId = getContent().site?.id;
+            try {
+              if (siteId) {
+                payload.id = siteId;
+                await SiteAPI.update(payload);
+              } else {
+                await SiteAPI.create(payload);
+              }
+              const uploaded = await handleBrandLogoSaveIfSelected();
+              if (uploaded) {
+                const logoInput = document.getElementById("brandLogoFile");
+                if (logoInput) logoInput.value = "";
+              }
+              await refreshAllData();
+              alert("Сохранено.");
+            } catch (error) {
+              notifyError("Не удалось сохранить данные сайта", error);
+            }
           };
         }
 
@@ -899,29 +1115,32 @@
               return alert("Не удалось прочитать файл иконки: " + e.message);
             }
           }
-
-          updateContent((c) => {
-            c.services.push({
+          try {
+            await ServicesAPI.create({
               icon: icon || "✨",
-              iconSrc, // может быть undefined
-              title: { ru: titleRu, az: titleAz },
-              desc: { ru: descRu, az: descAz },
+              iconSrc,
+              titleRu,
+              titleAz,
+              descriptionRu: descRu,
+              descriptionAz: descAz,
             });
-          });
-
-          [
-            "svcIcon",
-            "svcTitleRu",
-            "svcTitleAz",
-            "svcDescRu",
-            "svcDescAz",
-          ].forEach((id) => {
-            const el = document.getElementById(id);
-            if (el) el.value = "";
-          });
-          if (document.getElementById("svcIconFile"))
-            document.getElementById("svcIconFile").value = "";
-          renderServicesAdmin();
+            [
+              "svcIcon",
+              "svcTitleRu",
+              "svcTitleAz",
+              "svcDescRu",
+              "svcDescAz",
+            ].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.value = "";
+            });
+            if (document.getElementById("svcIconFile"))
+              document.getElementById("svcIconFile").value = "";
+            await refreshAllData();
+            alert("Сервис добавлен");
+          } catch (error) {
+            notifyError("Не удалось создать сервис", error);
+          }
         };
       }
 
@@ -935,30 +1154,24 @@
           const file = document.getElementById("galleryFile")?.files?.[0];
 
           try {
-            let finalType = type;
-            let src;
-
             if (file) {
-              if (file.type.startsWith("video/")) finalType = "video";
-              else finalType = "image";
-              src = await readFileAsDataURL(file);
+              const isVideo = file.type.startsWith("video/");
+              if (isVideo) await GalleryAPI.uploadVideo(file, { alt });
+              else await GalleryAPI.uploadImage(file, { alt });
             } else {
               if (!urlVal) return alert("Укажите URL или выберите файл.");
-              src = urlVal;
+              await GalleryAPI.create({ type, src: urlVal, alt });
             }
-
-            updateContent((c) => {
-              c.gallery.push({ type: finalType, src, alt });
-            });
             if (document.getElementById("gallerySrc"))
               document.getElementById("gallerySrc").value = "";
             if (document.getElementById("galleryAlt"))
               document.getElementById("galleryAlt").value = "";
             if (document.getElementById("galleryFile"))
               document.getElementById("galleryFile").value = "";
-            renderGalleryAdmin();
-          } catch (e) {
-            alert("Не удалось добавить файл: " + e.message);
+            await refreshAllData();
+            alert("Элемент галереи добавлен");
+          } catch (error) {
+            notifyError("Не удалось добавить элемент галереи", error);
           }
         };
 
@@ -970,6 +1183,85 @@
             setAcceptByType(fileInp, typeSel.value)
           );
         }
+      }
+
+      function bindCreatePackage() {
+        const btn = document.getElementById("addPkg");
+        if (!btn) return;
+        btn.onclick = async () => {
+          const nameRu = document.getElementById("pkgNameRu")?.value.trim();
+          const nameAz = document.getElementById("pkgNameAz")?.value.trim();
+          const priceVal = document.getElementById("pkgPrice")?.value;
+          const currency = document.getElementById("pkgCurrency")?.value.trim();
+          const featuresRuRaw = document.getElementById("pkgFeaturesRu")?.value;
+          const featuresAzRaw = document.getElementById("pkgFeaturesAz")?.value;
+
+          if (!nameRu || !nameAz || !priceVal)
+            return alert("Заполните название и цену пакета");
+
+          const payload = {
+            nameRu,
+            nameAz,
+            price: Number(priceVal),
+            currency,
+            featuresRu: (featuresRuRaw || "")
+              .split(";")
+              .map((s) => s.trim())
+              .filter(Boolean),
+            featuresAz: (featuresAzRaw || "")
+              .split(";")
+              .map((s) => s.trim())
+              .filter(Boolean),
+          };
+
+          try {
+            await PackagesAPI.create(payload);
+            [
+              "pkgNameRu",
+              "pkgNameAz",
+              "pkgPrice",
+              "pkgCurrency",
+              "pkgFeaturesRu",
+              "pkgFeaturesAz",
+            ].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.value = "";
+            });
+            await refreshAllData();
+            alert("Пакет добавлен");
+          } catch (error) {
+            notifyError("Не удалось создать пакет", error);
+          }
+        };
+      }
+
+      function bindCreateFaq() {
+        const btn = document.getElementById("addFaq");
+        if (!btn) return;
+        btn.onclick = async () => {
+          const qRu = document.getElementById("faqQRu")?.value.trim();
+          const qAz = document.getElementById("faqQAz")?.value.trim();
+          const aRu = document.getElementById("faqARu")?.value.trim();
+          const aAz = document.getElementById("faqAAz")?.value.trim();
+          if (!qRu || !qAz || !aRu || !aAz)
+            return alert("Заполните все поля FAQ");
+          try {
+            await FaqAPI.create({
+              questionRu: qRu,
+              questionAz: qAz,
+              answerRu: aRu,
+              answerAz: aAz,
+            });
+            ["faqQRu", "faqQAz", "faqARu", "faqAAz"].forEach((id) => {
+              const el = document.getElementById(id);
+              if (el) el.value = "";
+            });
+            await refreshAllData();
+            alert("FAQ добавлен");
+          } catch (error) {
+            notifyError("Не удалось добавить FAQ", error);
+          }
+        };
       }
 
       /* ---------- ABOUT (Admin) ---------- */
@@ -1017,7 +1309,7 @@
           .join("");
 
         list.querySelectorAll("input").forEach((inp) => {
-          inp.addEventListener("change", () => {
+          inp.addEventListener("change", async () => {
             const idx = +inp.dataset.idx;
             const field = inp.dataset.field;
             updateContent((c) => {
@@ -1027,18 +1319,51 @@
                 c.about.stats[idx][grp][loc] = inp.value;
               }
             });
+            try {
+              await persistAboutStat(idx);
+              await refreshAllData({ silent: true });
+            } catch (error) {
+              notifyError("Не удалось обновить статистику", error);
+              await refreshAllData({ silent: true });
+            }
           });
         });
 
         list.querySelectorAll('button[data-act="del-stat"]').forEach((btn) => {
-          btn.addEventListener("click", () => {
+          btn.addEventListener("click", async () => {
             const idx = +btn.dataset.idx;
-            updateContent((c) => {
-              c.about.stats.splice(idx, 1);
-            });
-            renderAboutStatsAdmin();
+            const stat = getContent().about?.stats?.[idx];
+            if (!stat?.id) {
+              updateContent((c) => {
+                c.about.stats.splice(idx, 1);
+              });
+              renderAboutStatsAdmin();
+              return;
+            }
+            try {
+              await AboutAPI.deleteStat(stat.id);
+              await refreshAllData();
+            } catch (error) {
+              notifyError("Не удалось удалить статистику", error);
+            }
           });
         });
+      }
+
+      function statToDto(stat) {
+        return {
+          labelRu: stat.label?.ru || "",
+          labelAz: stat.label?.az || "",
+          value: stat.value || "",
+        };
+      }
+
+      async function persistAboutStat(idx) {
+        const stat = getContent().about?.stats?.[idx];
+        if (!stat) return;
+        const payload = statToDto(stat);
+        if (stat.id) await AboutAPI.updateStat(stat.id, payload);
+        else await AboutAPI.createStat(payload);
       }
 
       function renderAboutValuesAdmin() {
@@ -1062,24 +1387,56 @@
           .join("");
 
         list.querySelectorAll("input").forEach((inp) => {
-          inp.addEventListener("change", () => {
+          inp.addEventListener("change", async () => {
             const idx = +inp.dataset.idx;
             const field = inp.dataset.field;
             updateContent((c) => {
               c.about.values[idx][field] = inp.value;
             });
+            try {
+              await persistAboutValue(idx);
+              await refreshAllData({ silent: true });
+            } catch (error) {
+              notifyError("Не удалось обновить ценность", error);
+              await refreshAllData({ silent: true });
+            }
           });
         });
 
         list.querySelectorAll('button[data-act="del-val"]').forEach((btn) => {
-          btn.addEventListener("click", () => {
+          btn.addEventListener("click", async () => {
             const idx = +btn.dataset.idx;
-            updateContent((c) => {
-              c.about.values.splice(idx, 1);
-            });
-            renderAboutValuesAdmin();
+            const value = getContent().about?.values?.[idx];
+            if (!value?.id) {
+              updateContent((c) => {
+                c.about.values.splice(idx, 1);
+              });
+              renderAboutValuesAdmin();
+              return;
+            }
+            try {
+              await AboutAPI.deleteValue(value.id);
+              await refreshAllData();
+            } catch (error) {
+              notifyError("Не удалось удалить ценность", error);
+            }
           });
         });
+      }
+
+      function valueToDto(value) {
+        return {
+          valueRu: value.ru || "",
+          valueAz: value.az || "",
+        };
+      }
+
+      async function persistAboutValue(idx) {
+        const value = getContent().about?.values?.[idx];
+        if (!value) return;
+        const payload = valueToDto(value);
+        if (value.id) await AboutAPI.updateValue(value.id, payload);
+        else await AboutAPI.createValue(payload);
       }
 
       function renderAboutTimelineAdmin() {
@@ -1106,7 +1463,7 @@
           .join("");
 
         list.querySelectorAll("input").forEach((inp) => {
-          inp.addEventListener("change", () => {
+          inp.addEventListener("change", async () => {
             const idx = +inp.dataset.idx;
             const field = inp.dataset.field;
             updateContent((c) => {
@@ -1116,18 +1473,51 @@
                 c.about.timeline[idx][grp][loc] = inp.value;
               }
             });
+            try {
+              await persistAboutTimeline(idx);
+              await refreshAllData({ silent: true });
+            } catch (error) {
+              notifyError("Не удалось обновить событие", error);
+              await refreshAllData({ silent: true });
+            }
           });
         });
 
         list.querySelectorAll('button[data-act="del-tl"]').forEach((btn) => {
-          btn.addEventListener("click", () => {
+          btn.addEventListener("click", async () => {
             const idx = +btn.dataset.idx;
-            updateContent((c) => {
-              c.about.timeline.splice(idx, 1);
-            });
-            renderAboutTimelineAdmin();
+            const tl = getContent().about?.timeline?.[idx];
+            if (!tl?.id) {
+              updateContent((c) => {
+                c.about.timeline.splice(idx, 1);
+              });
+              renderAboutTimelineAdmin();
+              return;
+            }
+            try {
+              await AboutAPI.deleteTimeline(tl.id);
+              await refreshAllData();
+            } catch (error) {
+              notifyError("Не удалось удалить событие", error);
+            }
           });
         });
+      }
+
+      function timelineToDto(tl) {
+        return {
+          year: tl.year || "",
+          textRu: tl.text?.ru || "",
+          textAz: tl.text?.az || "",
+        };
+      }
+
+      async function persistAboutTimeline(idx) {
+        const tl = getContent().about?.timeline?.[idx];
+        if (!tl) return;
+        const payload = timelineToDto(tl);
+        if (tl.id) await AboutAPI.updateTimeline(tl.id, payload);
+        else await AboutAPI.createTimeline(payload);
       }
 
       function renderAboutTeamAdmin() {
@@ -1160,7 +1550,7 @@
           .join("");
 
         list.querySelectorAll("input[data-field]").forEach((inp) => {
-          inp.addEventListener("change", () => {
+          inp.addEventListener("change", async () => {
             const idx = +inp.dataset.idx;
             const field = inp.dataset.field;
             updateContent((c) => {
@@ -1170,6 +1560,13 @@
                 c.about.team[idx][grp][loc] = inp.value;
               }
             });
+            try {
+              await persistAboutTeamMember(idx);
+              await refreshAllData({ silent: true });
+            } catch (error) {
+              notifyError("Не удалось обновить данные участника", error);
+              await refreshAllData({ silent: true });
+            }
           });
         });
 
@@ -1180,23 +1577,63 @@
               const f = fileInp.files?.[0];
               if (!f) return;
               const idx = +fileInp.dataset.idx;
-              const dataUrl = await readFileAsDataURL(f);
-              updateContent((c) => {
-                c.about.team[idx].avatarSrc = dataUrl;
-              });
-              renderAboutTeamAdmin();
+              const member = getContent().about?.team?.[idx];
+              if (!member?.id)
+                return notifyError(
+                  "Сначала сохраните участника, чтобы загрузить фото",
+                  ""
+                );
+              try {
+                const dataUrl = await readFileAsDataURL(f);
+                updateContent((c) => {
+                  c.about.team[idx].avatarSrc = dataUrl;
+                });
+                renderAboutTeamAdmin();
+                await AboutAPI.uploadTeamAvatar(member.id, dataUrl);
+                await refreshAllData({ silent: true });
+              } catch (error) {
+                notifyError("Не удалось загрузить аватар", error);
+                await refreshAllData({ silent: true });
+              }
             });
           });
 
         list.querySelectorAll('button[data-act="del-team"]').forEach((btn) => {
-          btn.addEventListener("click", () => {
+          btn.addEventListener("click", async () => {
             const idx = +btn.dataset.idx;
-            updateContent((c) => {
-              c.about.team.splice(idx, 1);
-            });
-            renderAboutTeamAdmin();
+            const member = getContent().about?.team?.[idx];
+            if (!member?.id) {
+              updateContent((c) => {
+                c.about.team.splice(idx, 1);
+              });
+              renderAboutTeamAdmin();
+              return;
+            }
+            try {
+              await AboutAPI.deleteTeamMember(member.id);
+              await refreshAllData();
+            } catch (error) {
+              notifyError("Не удалось удалить участника", error);
+            }
           });
         });
+      }
+
+      function teamToDto(member) {
+        return {
+          name: member.name || "",
+          roleRu: member.role?.ru || "",
+          roleAz: member.role?.az || "",
+          avatarSrc: member.avatarSrc || "",
+        };
+      }
+
+      async function persistAboutTeamMember(idx) {
+        const member = getContent().about?.team?.[idx];
+        if (!member) return;
+        const payload = teamToDto(member);
+        if (member.id) await AboutAPI.updateTeamMember(member.id, payload);
+        else await AboutAPI.createTeamMember(payload);
       }
 
       function bindAboutActions() {
@@ -1213,84 +1650,99 @@
             const azS = document.getElementById("aboutHeroSubAz").value.trim();
             const f = document.getElementById("aboutHeroImg").files?.[0];
 
-            let dataUrl;
-            if (f) {
-              dataUrl = await readFileAsDataURL(f);
-            }
+            try {
+              await AboutAPI.updateHero({
+                heroTitleRu: ruT,
+                heroTitleAz: azT,
+                heroSubtitleRu: ruS,
+                heroSubtitleAz: azS,
+                heroImageSrc: getContent().about?.hero?.imageSrc || "",
+              });
 
-            updateContent((c) => {
-              c.about.hero.title.ru = ruT;
-              c.about.hero.title.az = azT;
-              c.about.hero.subtitle.ru = ruS;
-              c.about.hero.subtitle.az = azS;
-              if (dataUrl) c.about.hero.imageSrc = dataUrl;
-            });
+              if (f) {
+                const dataUrl = await readFileAsDataURL(f);
+                await AboutAPI.uploadHeroImage(dataUrl);
+                const fileInput = document.getElementById("aboutHeroImg");
+                if (fileInput) fileInput.value = "";
+              }
 
-            const prev = document.getElementById("aboutHeroPreview");
-            if (prev && getContent().about.hero.imageSrc) {
-              prev.src = getContent().about.hero.imageSrc;
-              prev.style.display = "inline-block";
+              await refreshAllData();
+              const prev = document.getElementById("aboutHeroPreview");
+              if (prev && getContent().about?.hero?.imageSrc) {
+                prev.src = getContent().about.hero.imageSrc;
+                prev.style.display = "inline-block";
+              }
+              alert("Hero сохранён");
+            } catch (error) {
+              notifyError("Не удалось сохранить блок Hero", error);
             }
-            alert("Hero сохранён");
           };
         }
 
         const addStat = document.getElementById("addStat");
         if (addStat) {
-          addStat.onclick = () => {
+          addStat.onclick = async () => {
             const lr = document.getElementById("statLabelRu").value.trim();
             const la = document.getElementById("statLabelAz").value.trim();
             const vv = document.getElementById("statValue").value.trim();
             if (!lr || !la || !vv) return alert("Заполните все поля KPI");
-            updateContent((c) => {
-              (c.about.stats ||= []).push({
-                label: { ru: lr, az: la },
+            try {
+              await AboutAPI.createStat({
+                labelRu: lr,
+                labelAz: la,
                 value: vv,
               });
-            });
-            ["statLabelRu", "statLabelAz", "statValue"].forEach((id) => {
-              const el = document.getElementById(id);
-              if (el) el.value = "";
-            });
-            renderAboutStatsAdmin();
+              ["statLabelRu", "statLabelAz", "statValue"].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.value = "";
+              });
+              await refreshAllData();
+            } catch (error) {
+              notifyError("Не удалось добавить KPI", error);
+            }
           };
         }
 
         const addVal = document.getElementById("addValue");
         if (addVal) {
-          addVal.onclick = () => {
+          addVal.onclick = async () => {
             const vr = document.getElementById("valRu").value.trim();
             const va = document.getElementById("valAz").value.trim();
             if (!vr || !va) return alert("Укажите ценности RU и AZ");
-            updateContent((c) => {
-              (c.about.values ||= []).push({ ru: vr, az: va });
-            });
-            ["valRu", "valAz"].forEach((id) => {
-              const el = document.getElementById(id);
-              if (el) el.value = "";
-            });
-            renderAboutValuesAdmin();
+            try {
+              await AboutAPI.createValue({ valueRu: vr, valueAz: va });
+              ["valRu", "valAz"].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.value = "";
+              });
+              await refreshAllData();
+            } catch (error) {
+              notifyError("Не удалось добавить ценность", error);
+            }
           };
         }
 
         const addTl = document.getElementById("addTimeline");
         if (addTl) {
-          addTl.onclick = () => {
+          addTl.onclick = async () => {
             const y = document.getElementById("tlYear").value.trim();
             const tr = document.getElementById("tlTextRu").value.trim();
             const ta = document.getElementById("tlTextAz").value.trim();
             if (!y || !tr || !ta) return alert("Заполните год и тексты RU/AZ");
-            updateContent((c) => {
-              (c.about.timeline ||= []).push({
+            try {
+              await AboutAPI.createTimeline({
                 year: y,
-                text: { ru: tr, az: ta },
+                textRu: tr,
+                textAz: ta,
               });
-            });
-            ["tlYear", "tlTextRu", "tlTextAz"].forEach((id) => {
-              const el = document.getElementById(id);
-              if (el) el.value = "";
-            });
-            renderAboutTimelineAdmin();
+              ["tlYear", "tlTextRu", "tlTextAz"].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.value = "";
+              });
+              await refreshAllData();
+            } catch (error) {
+              notifyError("Не удалось добавить событие", error);
+            }
           };
         }
 
@@ -1307,20 +1759,23 @@
             if (f) {
               dataUrl = await readFileAsDataURL(f);
             }
-            updateContent((c) => {
-              (c.about.team ||= []).push({
+            try {
+              await AboutAPI.createTeamMember({
                 name,
-                role: { ru: rr, az: ra },
+                roleRu: rr,
+                roleAz: ra,
                 avatarSrc: dataUrl,
               });
-            });
-            ["teamName", "teamRoleRu", "teamRoleAz"].forEach((id) => {
-              const el = document.getElementById(id);
-              if (el) el.value = "";
-            });
-            const fileEl = document.getElementById("teamAvatar");
-            if (fileEl) fileEl.value = "";
-            renderAboutTeamAdmin();
+              ["teamName", "teamRoleRu", "teamRoleAz"].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.value = "";
+              });
+              const fileEl = document.getElementById("teamAvatar");
+              if (fileEl) fileEl.value = "";
+              await refreshAllData();
+            } catch (error) {
+              notifyError("Не удалось добавить участника", error);
+            }
           };
         }
       }
@@ -1335,30 +1790,17 @@
       }
 
       /* ---------- Init ---------- */
-      function init() {
-        // quick brand/hero
-        hydrateQuick();
+      async function init() {
         bindBrandHero();
-
-        // footer
-        hydrateFooter();
         bindFooterActions();
-
-        // services
-        renderServicesAdmin();
         bindCreateService();
-
-        // gallery
-        renderGalleryAdmin();
         bindCreateGallery();
-
-        // packages / faq
-        renderPackagesAdmin();
-        renderFaqAdmin();
-
-        // about
-        renderAboutAdmin();
+        bindCreatePackage();
+        bindCreateFaq();
         bindAboutActions();
+
+        renderAllSections();
+        await refreshAllData({ silent: true });
       }
 
       init();
