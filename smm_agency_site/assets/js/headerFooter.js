@@ -34,6 +34,7 @@ export function renderHeaderFooter() {
 
   if (rootHeader) {
     const hasLogo = !!content.site.logoSrc;
+    const currentLocale = content.locale || 'ru';
 
     // Desktop nav (visible ≥ 901px), burger visible on mobile
     rootHeader.innerHTML = `
@@ -42,7 +43,7 @@ export function renderHeaderFooter() {
         <a class="brand" href="index.html" style="display:flex;align-items:center;gap:10px;">
           ${
             hasLogo
-              ? `<img src="${content.site.logoSrc}" alt="logo" style="width:36px;height:36px;object-fit:cover;border-radius:10px;border:1px solid var(--line)">`
+              ? `<img src="${content.site.logoSrc}" alt="logo" style="width:40px;height:40px;object-fit:cover;border-radius:12px;border:1px solid var(--border-primary)">`
               : ""
           }
           <span>${content.site.brand}</span>
@@ -57,8 +58,8 @@ export function renderHeaderFooter() {
         </nav>
 
         <div class="lang-switch desktop-nav">
-          <button data-lang="ru" class="lang-btn">RU</button>
-          <button data-lang="az" class="lang-btn">AZ</button>
+          <button data-lang="ru" class="lang-btn ${currentLocale === 'ru' ? 'active' : ''}">RU</button>
+          <button data-lang="az" class="lang-btn ${currentLocale === 'az' ? 'active' : ''}">AZ</button>
         </div>
 
         <button class="burger-btn" aria-label="Открыть меню" aria-controls="mobile-drawer" aria-expanded="false">
@@ -73,7 +74,7 @@ export function renderHeaderFooter() {
         <div class="brand-mini">
           ${
             hasLogo
-              ? `<img src="${content.site.logoSrc}" alt="logo" style="width:28px;height:28px;object-fit:cover;border-radius:8px;border:1px solid var(--line)">`
+              ? `<img src="${content.site.logoSrc}" alt="logo" style="width:32px;height:32px;object-fit:cover;border-radius:10px;border:1px solid var(--border-primary)">`
               : ""
           }
           <span>${content.site.brand}</span>
@@ -91,8 +92,8 @@ export function renderHeaderFooter() {
           .join("")}
       </nav>
       <div class="drawer-lang">
-        <button data-lang="ru" class="lang-btn">RU</button>
-        <button data-lang="az" class="lang-btn">AZ</button>
+        <button data-lang="ru" class="lang-btn ${currentLocale === 'ru' ? 'active' : ''}">RU</button>
+        <button data-lang="az" class="lang-btn ${currentLocale === 'az' ? 'active' : ''}">AZ</button>
       </div>
       <div class="drawer-socials">
         ${content.site.socials
@@ -151,6 +152,24 @@ export function renderHeaderFooter() {
     drawer.querySelectorAll("a.drawer-link").forEach((a) => {
       a.addEventListener("click", closeDrawer);
     });
+
+    // Add scroll effect to header
+    let lastScrollY = window.scrollY;
+    const header = rootHeader.querySelector('.header');
+    
+    function updateHeaderOnScroll() {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > 50) {
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+      }
+      
+      lastScrollY = currentScrollY;
+    }
+    
+    window.addEventListener('scroll', updateHeaderOnScroll, { passive: true });
   }
 
   if (rootFooter) {
