@@ -426,6 +426,120 @@
         renderFaqAdmin();
         renderAboutAdmin();
       }
+
+      function toPackageLocal(dto, fallback) {
+        if (!dto && fallback) {
+          return {
+            id: null,
+            name: {
+              ru: fallback.nameRu || "",
+              az: fallback.nameAz || "",
+            },
+            price: Number(fallback.price ?? 0),
+            currency: fallback.currency || "",
+            features: {
+              ru: fallback.featuresRu || [],
+              az: fallback.featuresAz || [],
+            },
+          };
+        }
+        return {
+          id: dto?.id ?? null,
+          name: {
+            ru: dto?.nameRu || "",
+            az: dto?.nameAz || "",
+          },
+          price: Number(dto?.price ?? 0),
+          currency: dto?.currency || "",
+          features: {
+            ru: dto?.featuresRu || [],
+            az: dto?.featuresAz || [],
+          },
+        };
+      }
+
+      function toFaqLocal(dto, fallback) {
+        if (!dto && fallback) {
+          return {
+            id: null,
+            q: { ru: fallback.questionRu || "", az: fallback.questionAz || "" },
+            a: { ru: fallback.answerRu || "", az: fallback.answerAz || "" },
+          };
+        }
+        return {
+          id: dto?.id ?? null,
+          q: { ru: dto?.questionRu || "", az: dto?.questionAz || "" },
+          a: { ru: dto?.answerRu || "", az: dto?.answerAz || "" },
+        };
+      }
+
+      function toStatLocal(dto, fallback) {
+        if (!dto && fallback) {
+          return {
+            id: null,
+            label: { ru: fallback.labelRu || "", az: fallback.labelAz || "" },
+            value: fallback.value || "",
+          };
+        }
+        return {
+          id: dto?.id ?? null,
+          label: { ru: dto?.labelRu || "", az: dto?.labelAz || "" },
+          value: dto?.value || "",
+        };
+      }
+
+      function toValueLocal(dto, fallback) {
+        if (!dto && fallback) {
+          return {
+            id: null,
+            ru: fallback.valueRu || "",
+            az: fallback.valueAz || "",
+          };
+        }
+        return {
+          id: dto?.id ?? null,
+          ru: dto?.valueRu || "",
+          az: dto?.valueAz || "",
+        };
+      }
+
+      function toTimelineLocal(dto, fallback) {
+        if (!dto && fallback) {
+          return {
+            id: null,
+            year: fallback.year || "",
+            text: { ru: fallback.textRu || "", az: fallback.textAz || "" },
+          };
+        }
+        return {
+          id: dto?.id ?? null,
+          year: dto?.year || "",
+          text: { ru: dto?.textRu || "", az: dto?.textAz || "" },
+        };
+      }
+
+      function toTeamLocal(dto, fallback) {
+        if (!dto && fallback) {
+          return {
+            id: null,
+            name: fallback.name || "",
+            role: {
+              ru: fallback.roleRu || "",
+              az: fallback.roleAz || "",
+            },
+            avatarSrc: fallback.avatarSrc || "",
+          };
+        }
+        return {
+          id: dto?.id ?? null,
+          name: dto?.name || "",
+          role: {
+            ru: dto?.roleRu || "",
+            az: dto?.roleAz || "",
+          },
+          avatarSrc: dto?.avatarSrc || "",
+        };
+      }
       function ensureAbout() {
         const c = getContent();
         if (!c.about) {
@@ -1176,7 +1290,7 @@
               document.getElementById("galleryAlt").value = "";
             if (document.getElementById("galleryFile"))
               document.getElementById("galleryFile").value = "";
-            await refreshAllData();
+            await refreshAllData({ silent: true });
             alert("Элемент галереи добавлен");
           } catch (error) {
             notifyError("Не удалось добавить элемент галереи", error);
@@ -1223,7 +1337,12 @@
           };
 
           try {
-            await PackagesAPI.create(payload);
+            const created = await PackagesAPI.create(payload);
+            updateContent((c) => {
+              const local = toPackageLocal(created, payload);
+              c.packages = [...(c.packages || []), local];
+            });
+            renderPackagesAdmin();
             [
               "pkgNameRu",
               "pkgNameAz",
@@ -1235,7 +1354,7 @@
               const el = document.getElementById(id);
               if (el) el.value = "";
             });
-            await refreshAllData();
+            await refreshAllData({ silent: true });
             alert("Пакет добавлен");
           } catch (error) {
             notifyError("Не удалось создать пакет", error);
@@ -1253,18 +1372,24 @@
           const aAz = document.getElementById("faqAAz")?.value.trim();
           if (!qRu || !qAz || !aRu || !aAz)
             return alert("Заполните все поля FAQ");
+          const payload = {
+            questionRu: qRu,
+            questionAz: qAz,
+            answerRu: aRu,
+            answerAz: aAz,
+          };
           try {
-            await FaqAPI.create({
-              questionRu: qRu,
-              questionAz: qAz,
-              answerRu: aRu,
-              answerAz: aAz,
+            const created = await FaqAPI.create(payload);
+            updateContent((c) => {
+              const local = toFaqLocal(created, payload);
+              c.faq = [...(c.faq || []), local];
             });
+            renderFaqAdmin();
             ["faqQRu", "faqQAz", "faqARu", "faqAAz"].forEach((id) => {
               const el = document.getElementById(id);
               if (el) el.value = "";
             });
-            await refreshAllData();
+            await refreshAllData({ silent: true });
             alert("FAQ добавлен");
           } catch (error) {
             notifyError("Не удалось добавить FAQ", error);
@@ -1368,10 +1493,9 @@
 
       async function persistAboutStat(idx) {
         const stat = getContent().about?.stats?.[idx];
-        if (!stat) return;
+        if (!stat?.id) return;
         const payload = statToDto(stat);
-        if (stat.id) await AboutAPI.updateStat(stat.id, payload);
-        else await AboutAPI.createStat(payload);
+        await AboutAPI.updateStat(stat.id, payload);
       }
 
       function renderAboutValuesAdmin() {
@@ -1441,10 +1565,9 @@
 
       async function persistAboutValue(idx) {
         const value = getContent().about?.values?.[idx];
-        if (!value) return;
+        if (!value?.id) return;
         const payload = valueToDto(value);
-        if (value.id) await AboutAPI.updateValue(value.id, payload);
-        else await AboutAPI.createValue(payload);
+        await AboutAPI.updateValue(value.id, payload);
       }
 
       function renderAboutTimelineAdmin() {
@@ -1522,10 +1645,9 @@
 
       async function persistAboutTimeline(idx) {
         const tl = getContent().about?.timeline?.[idx];
-        if (!tl) return;
+        if (!tl?.id) return;
         const payload = timelineToDto(tl);
-        if (tl.id) await AboutAPI.updateTimeline(tl.id, payload);
-        else await AboutAPI.createTimeline(payload);
+        await AboutAPI.updateTimeline(tl.id, payload);
       }
 
       function renderAboutTeamAdmin() {
@@ -1638,10 +1760,9 @@
 
       async function persistAboutTeamMember(idx) {
         const member = getContent().about?.team?.[idx];
-        if (!member) return;
+        if (!member?.id) return;
         const payload = teamToDto(member);
-        if (member.id) await AboutAPI.updateTeamMember(member.id, payload);
-        else await AboutAPI.createTeamMember(payload);
+        await AboutAPI.updateTeamMember(member.id, payload);
       }
 
       function bindAboutActions() {
@@ -1656,86 +1777,137 @@
               .value.trim();
             const ruS = document.getElementById("aboutHeroSubRu").value.trim();
             const azS = document.getElementById("aboutHeroSubAz").value.trim();
-            const f = document.getElementById("aboutHeroImg").files?.[0];
+            const fileInput = document.getElementById("aboutHeroImg");
+            const f = fileInput?.files?.[0];
 
-            let dataUrl;
-            if (f) {
-              dataUrl = await readFileAsDataURL(f);
+            try {
+              await AboutAPI.updateHero({
+                heroTitleRu: ruT,
+                heroTitleAz: azT,
+                heroSubtitleRu: ruS,
+                heroSubtitleAz: azS,
+              });
+
+              let heroImageSrc;
+              if (f) {
+                const dataUrl = await readFileAsDataURL(f);
+                const dto = await AboutAPI.uploadHeroImage(dataUrl);
+                heroImageSrc = dto?.heroImageSrc || dataUrl;
+                if (fileInput) fileInput.value = "";
+              }
+
+              if (!getContent().about) ensureAbout();
+              updateContent((c) => {
+                c.about = c.about || {};
+                c.about.hero = c.about.hero || {
+                  title: { ru: "", az: "" },
+                  subtitle: { ru: "", az: "" },
+                  imageSrc: "",
+                };
+                c.about.hero.title = {
+                  ru: ruT,
+                  az: azT,
+                };
+                c.about.hero.subtitle = {
+                  ru: ruS,
+                  az: azS,
+                };
+                if (heroImageSrc) c.about.hero.imageSrc = heroImageSrc;
+              });
+              await refreshAllData({ silent: true });
+
+              const prev = document.getElementById("aboutHeroPreview");
+              if (prev && getContent().about?.hero?.imageSrc) {
+                prev.src = getContent().about.hero.imageSrc;
+                prev.style.display = "inline-block";
+              }
+              alert("Hero сохранён");
+            } catch (error) {
+              notifyError("Не удалось сохранить блок Hero", error);
             }
-
-            updateContent((c) => {
-              c.about.hero.title.ru = ruT;
-              c.about.hero.title.az = azT;
-              c.about.hero.subtitle.ru = ruS;
-              c.about.hero.subtitle.az = azS;
-              if (dataUrl) c.about.hero.imageSrc = dataUrl;
-            });
-
-            const prev = document.getElementById("aboutHeroPreview");
-            if (prev && getContent().about.hero.imageSrc) {
-              prev.src = getContent().about.hero.imageSrc;
-              prev.style.display = "inline-block";
-            }
-            alert("Hero сохранён");
           };
         }
 
         const addStat = document.getElementById("addStat");
         if (addStat) {
-          addStat.onclick = () => {
+          addStat.onclick = async () => {
             const lr = document.getElementById("statLabelRu").value.trim();
             const la = document.getElementById("statLabelAz").value.trim();
             const vv = document.getElementById("statValue").value.trim();
             if (!lr || !la || !vv) return alert("Заполните все поля KPI");
-            updateContent((c) => {
-              (c.about.stats ||= []).push({
-                label: { ru: lr, az: la },
-                value: vv,
+            const payload = { labelRu: lr, labelAz: la, value: vv };
+            try {
+              const created = await AboutAPI.createStat(payload);
+              if (!getContent().about) ensureAbout();
+              const stat = toStatLocal(created, payload);
+              updateContent((c) => {
+                (c.about.stats ||= []).push(stat);
               });
-            });
-            ["statLabelRu", "statLabelAz", "statValue"].forEach((id) => {
-              const el = document.getElementById(id);
-              if (el) el.value = "";
-            });
-            renderAboutStatsAdmin();
+              ["statLabelRu", "statLabelAz", "statValue"].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.value = "";
+              });
+              renderAboutStatsAdmin();
+              await refreshAllData({ silent: true });
+              alert("KPI добавлен");
+            } catch (error) {
+              notifyError("Не удалось добавить KPI", error);
+            }
           };
         }
 
         const addVal = document.getElementById("addValue");
         if (addVal) {
-          addVal.onclick = () => {
+          addVal.onclick = async () => {
             const vr = document.getElementById("valRu").value.trim();
             const va = document.getElementById("valAz").value.trim();
             if (!vr || !va) return alert("Укажите ценности RU и AZ");
-            updateContent((c) => {
-              (c.about.values ||= []).push({ ru: vr, az: va });
-            });
-            ["valRu", "valAz"].forEach((id) => {
-              const el = document.getElementById(id);
-              if (el) el.value = "";
-            });
-            renderAboutValuesAdmin();
+            const payload = { valueRu: vr, valueAz: va };
+            try {
+              const created = await AboutAPI.createValue(payload);
+              if (!getContent().about) ensureAbout();
+              const value = toValueLocal(created, payload);
+              updateContent((c) => {
+                (c.about.values ||= []).push(value);
+              });
+              ["valRu", "valAz"].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.value = "";
+              });
+              renderAboutValuesAdmin();
+              await refreshAllData({ silent: true });
+              alert("Ценность добавлена");
+            } catch (error) {
+              notifyError("Не удалось добавить ценность", error);
+            }
           };
         }
 
         const addTl = document.getElementById("addTimeline");
         if (addTl) {
-          addTl.onclick = () => {
+          addTl.onclick = async () => {
             const y = document.getElementById("tlYear").value.trim();
             const tr = document.getElementById("tlTextRu").value.trim();
             const ta = document.getElementById("tlTextAz").value.trim();
             if (!y || !tr || !ta) return alert("Заполните год и тексты RU/AZ");
-            updateContent((c) => {
-              (c.about.timeline ||= []).push({
-                year: y,
-                text: { ru: tr, az: ta },
+            const payload = { year: y, textRu: tr, textAz: ta };
+            try {
+              const created = await AboutAPI.createTimeline(payload);
+              if (!getContent().about) ensureAbout();
+              const item = toTimelineLocal(created, payload);
+              updateContent((c) => {
+                (c.about.timeline ||= []).push(item);
               });
-            });
-            ["tlYear", "tlTextRu", "tlTextAz"].forEach((id) => {
-              const el = document.getElementById(id);
-              if (el) el.value = "";
-            });
-            renderAboutTimelineAdmin();
+              ["tlYear", "tlTextRu", "tlTextAz"].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.value = "";
+              });
+              renderAboutTimelineAdmin();
+              await refreshAllData({ silent: true });
+              alert("Событие добавлено");
+            } catch (error) {
+              notifyError("Не удалось добавить событие", error);
+            }
           };
         }
 
@@ -1745,27 +1917,45 @@
             const name = document.getElementById("teamName").value.trim();
             const rr = document.getElementById("teamRoleRu").value.trim();
             const ra = document.getElementById("teamRoleAz").value.trim();
-            const f = document.getElementById("teamAvatar").files?.[0];
+            const fileEl = document.getElementById("teamAvatar");
+            const f = fileEl?.files?.[0];
             if (!name || !rr || !ra)
               return alert("Имя и роли RU/AZ обязательны");
-            let dataUrl = "";
-            if (f) {
-              dataUrl = await readFileAsDataURL(f);
-            }
-            updateContent((c) => {
-              (c.about.team ||= []).push({
+
+            try {
+              const created = await AboutAPI.createTeamMember({
                 name,
-                role: { ru: rr, az: ra },
-                avatarSrc: dataUrl,
+                roleRu: rr,
+                roleAz: ra,
               });
-            });
-            ["teamName", "teamRoleRu", "teamRoleAz"].forEach((id) => {
-              const el = document.getElementById(id);
-              if (el) el.value = "";
-            });
-            const fileEl = document.getElementById("teamAvatar");
-            if (fileEl) fileEl.value = "";
-            renderAboutTeamAdmin();
+
+              let finalDto = created;
+              if (f && created?.id) {
+                const dataUrl = await readFileAsDataURL(f);
+                finalDto = await AboutAPI.uploadTeamAvatar(created.id, dataUrl);
+              }
+
+              if (!getContent().about) ensureAbout();
+              const member = toTeamLocal(finalDto, {
+                name,
+                roleRu: rr,
+                roleAz: ra,
+                avatarSrc: finalDto?.avatarSrc || "",
+              });
+              updateContent((c) => {
+                (c.about.team ||= []).push(member);
+              });
+              ["teamName", "teamRoleRu", "teamRoleAz"].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.value = "";
+              });
+              if (fileEl) fileEl.value = "";
+              renderAboutTeamAdmin();
+              await refreshAllData({ silent: true });
+              alert("Участник добавлен");
+            } catch (error) {
+              notifyError("Не удалось добавить участника", error);
+            }
           };
         }
       }
