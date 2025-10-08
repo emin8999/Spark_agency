@@ -972,7 +972,7 @@
           nameAz: pkg.name?.az || "",
           price:
             pkg.price !== undefined && pkg.price !== null
-              ? String(pkg.price)
+              ? Number(pkg.price)
               : null,
           currency: pkg.currency || "",
           featuresRu: pkg.features?.ru || [],
@@ -1325,10 +1325,13 @@
           if (!nameRu || !nameAz || !priceVal)
             return alert("Заполните название и цену пакета");
 
+          const price = parseFloat(priceVal);
+          if (Number.isNaN(price)) return alert("Укажите корректное число в поле цены");
+
           const payload = {
             nameRu,
             nameAz,
-            price: priceVal,
+            price,
             currency,
             featuresRu: (featuresRuRaw || "")
               .split(";")
