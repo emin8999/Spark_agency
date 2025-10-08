@@ -5,6 +5,11 @@ spring:
     resources:
       static-locations: classpath:/static/, file:images/
 
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
 server:
   port: 9191
   servlet:
@@ -14,6 +19,6 @@ file:
   upload-dir: images
 
 cloudinary:
-   cloud-name: drzqytgdt
-   api-key: 968449147357678
-   api-secret: toZUNGbC3jF44TLI3RhyQiFG8gI
+  cloud-name: drzqytgdt
+  api-key: 968449147357678
+  api-secret: toZUNGbC3jF44TLI3RhyQiFG8gI
