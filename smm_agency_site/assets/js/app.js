@@ -55,20 +55,18 @@ function renderServices() {
   if (!root) return;
   const c = getContent();
   root.innerHTML = c.services
-    .map((s) => {
+    .map((s, index) => {
       const iconHtml = s.iconSrc
-        ? `<img src="${s.iconSrc}" alt="" style="width:28px;height:28px;object-fit:cover;border-radius:8px;border:1px solid var(--line)">`
+        ? `<img src="${s.iconSrc}" alt="" style="width:32px;height:32px;object-fit:cover;border-radius:8px;border:1px solid var(--border-primary)">`
         : `<div class="icon">${s.icon || "✨"}</div>`;
       return `
-      <div class="item card">
-        <div class="icon" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;">
+      <div class="item card" style="animation-delay: ${index * 0.1}s;">
+        <div class="icon" style="display:flex;align-items:center;justify-content:center;width:48px;height:48px;">
           ${iconHtml}
         </div>
         <div>
           <div class="title">${s.title?.[c.locale] || ""}</div>
-          <div class="desc" style="color:var(--fg)">${
-            s.desc?.[c.locale] || ""
-          }</div>
+          <div class="desc">${s.desc?.[c.locale] || ""}</div>
         </div>
       </div>`;
     })
@@ -81,17 +79,25 @@ function renderPackages() {
   const c = getContent();
   root.innerHTML = c.packages
     .map(
-      (p) => `
-    <div class="item card">
+      (p, index) => {
+        const isFeatured = index === 1; // Make the second package featured
+        const features = (p.features?.[c.locale] || []);
+        return `
+    <div class="item card ${isFeatured ? 'featured' : ''}" style="animation-delay: ${index * 0.1}s;">
       <div class="badge">${p.name?.[c.locale] || ""}</div>
-      <div style="font-size:28px; font-weight:800;">${p.price} ${
-        p.currency || ""
-      }</div>
-      <div style="color:var(--fg)">${(p.features?.[c.locale] || [])
-        .map((f) => `• ${f}`)
-        .join("<br>")}</div>
+      <div class="price-container">
+        <span class="price">${p.price}</span>
+        <span class="currency">${p.currency || ""}</span>
+      </div>
+      <ul class="features">
+        ${features.map(feature => `<li>${feature}</li>`).join('')}
+      </ul>
+      <div class="cta">
+        <a href="contact.html" class="btn ${isFeatured ? 'pulse' : ''}">${c.locale === 'az' ? 'Seç' : 'Выбрать'}</a>
+      </div>
     </div>
-  `
+  `;
+      }
     )
     .join("");
 }
@@ -102,12 +108,12 @@ function renderGallery() {
   const c = getContent();
   root.innerHTML = c.gallery
     .map(
-      (g) => `
-    <div class="item">
+      (g, index) => `
+    <div class="item" style="animation-delay: ${index * 0.1}s;">
       ${
         g.type === "video"
-          ? `<video src="${g.src}" controls playsinline></video>`
-          : `<img src="${g.src}" alt="${g.alt || ""}">`
+          ? `<video src="${g.src}" controls playsinline style="width:100%;height:250px;object-fit:cover;"></video>`
+          : `<img src="${g.src}" alt="${g.alt || ""}" style="width:100%;height:250px;object-fit:cover;">`
       }
     </div>
   `
@@ -121,10 +127,10 @@ function renderFAQ() {
   const c = getContent();
   root.innerHTML = c.faq
     .map(
-      (x) => `
-    <div class="qa">
+      (x, index) => `
+    <div class="qa" style="animation-delay: ${index * 0.1}s;">
       <strong>${x.q?.[c.locale] || ""}</strong>
-      <div style="color:var(--muted)">${x.a?.[c.locale] || ""}</div>
+      <div>${x.a?.[c.locale] || ""}</div>
     </div>
   `
     )
@@ -165,10 +171,10 @@ function renderAboutStats() {
   const L = c.locale;
   root.innerHTML = (a.stats || [])
     .map(
-      (s) => `
-    <div class="card" style="grid-column: span 3; text-align:center;">
-      <div style="font-size:28px;font-weight:800;">${s.value}</div>
-      <div style="color:var(--muted)">${s.label?.[L] || ""}</div>
+      (s, index) => `
+    <div class="card" style="grid-column: span 3; text-align:center; animation-delay: ${index * 0.1}s;">
+      <div style="font-size:2.5rem;font-weight:800;background:var(--gradient-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">${s.value}</div>
+      <div style="color:var(--text-secondary);font-weight:500;">${s.label?.[L] || ""}</div>
     </div>
   `
     )
@@ -183,10 +189,10 @@ function renderAboutValues() {
   const L = c.locale;
   root.innerHTML = (a.values || [])
     .map(
-      (v) => `
-    <div class="card" style="grid-column: span 6;">
-      <div style="font-weight:700;">${v[L] || ""}</div>
-      <div style="color:var(--muted);">—</div>
+      (v, index) => `
+    <div class="card" style="grid-column: span 6; animation-delay: ${index * 0.1}s;">
+      <div style="font-weight:700;color:var(--text-primary);font-size:1.125rem;">${v[L] || ""}</div>
+      <div style="color:var(--text-secondary);margin-top:0.5rem;">—</div>
     </div>
   `
     )
@@ -226,12 +232,12 @@ function renderAboutTeam() {
   const L = c.locale;
   root.innerHTML = (a.team || [])
     .map(
-      (m) => `
-    <div class="card team-card" data-team-card>
+      (m, index) => `
+    <div class="card team-card" data-team-card style="animation-delay: ${index * 0.1}s;">
       ${
         m.avatarSrc
           ? `<img src="${m.avatarSrc}" alt="" class="team-card__avatar" loading="lazy">`
-          : `<div class="badge team-card__placeholder">No photo</div>`
+          : `<div class="team-card__placeholder">${(m.name || "T")[0].toUpperCase()}</div>`
       }
       <div class="team-card__body">
         <div class="team-card__name">${m.name || ""}</div>
@@ -266,15 +272,55 @@ export function renderAll() {
   renderAboutTeam();
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  ensureAbout();
+let syncing = false;
+async function refreshFromAPI({ silent = false } = {}) {
+  if (syncing) return;
+  syncing = true;
   try {
     await syncAllFromAPI();
-  } catch (_) {
-    // ignore API errors; fallback to local content
+  } catch (err) {
+    if (!silent) console.error("Failed to sync content", err);
+  } finally {
+    renderAll();
+    syncing = false;
   }
-  renderAll();
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  ensureAbout();
+  await refreshFromAPI({ silent: true });
   onContentChange(() => {
     renderAll();
   });
+  
+  // Add intersection observer for animations
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, observerOptions);
+  
+  // Observe all cards and sections
+  document.querySelectorAll('.card, .section-title, .hero').forEach(el => {
+    el.classList.add('fade-in');
+    observer.observe(el);
+  });
+  
+  // Add page transition effect
+  document.body.classList.add('page-transition');
+  setTimeout(() => {
+    document.body.classList.add('loaded');
+  }, 100);
 });
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refreshFromAPI({ silent: true });
+});
+window.addEventListener("focus", () => refreshFromAPI({ silent: true }));
