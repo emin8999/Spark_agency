@@ -400,7 +400,8 @@
 
       function notifyError(message, error) {
         console.error(message, error);
-        alert(message);
+        const details = error?.message || error?.status || "";
+        alert(details ? `${message}: ${details}` : message);
       }
 
       async function refreshAllData({ silent = false } = {}) {
@@ -969,7 +970,10 @@
         return {
           nameRu: pkg.name?.ru || "",
           nameAz: pkg.name?.az || "",
-          price: pkg.price ?? 0,
+          price:
+            pkg.price !== undefined && pkg.price !== null
+              ? String(pkg.price)
+              : null,
           currency: pkg.currency || "",
           featuresRu: pkg.features?.ru || [],
           featuresAz: pkg.features?.az || [],
@@ -1324,7 +1328,7 @@
           const payload = {
             nameRu,
             nameAz,
-            price: Number(priceVal),
+            price: priceVal,
             currency,
             featuresRu: (featuresRuRaw || "")
               .split(";")
