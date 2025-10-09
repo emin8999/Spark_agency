@@ -2,51 +2,22 @@
 import { getContent, onContentChange, updateContent } from "./i18n.js";
 import { syncAllFromAPI } from "./apiClient.js";
 
-/* ---------- Ensure "about" exists with sensible defaults ---------- */
+/* ---------- Ensure \"about\" section has a basic structure ---------- */
 function ensureAbout() {
-  const c = getContent();
-  if (!c.about) {
-    updateContent((cc) => {
-      cc.about = {
-        hero: {
-          title: {
-            ru: "О нас — креатив & рост",
-            az: "Haqqımızda — kreativlik & artım",
-          },
-          subtitle: {
-            ru: "Мы соединяем стратегию, дизайн и перформанс.",
-            az: "Strategiya, dizayn və performansı birləşdiririk.",
-          },
-          imageSrc: "",
-        },
-        stats: [
-          { label: { ru: "Годы опыта", az: "İllik təcrübə" }, value: "5+" },
-          { label: { ru: "Проектов", az: "Layihə" }, value: "120+" },
-        ],
-        values: [
-          { ru: "Клиентская одержимость", az: "Müştəriyə fokus" },
-          { ru: "Смелый креатив", az: "Cəsarətli kreativ" },
-        ],
-        timeline: [
-          {
-            year: "2023",
-            text: { ru: "Открыли агентство", az: "Agentliyi açdıq" },
-          },
-          {
-            year: "2024",
-            text: { ru: "50+ успешных кейсов", az: "50+ uğurlu layihə" },
-          },
-        ],
-        team: [
-          {
-            name: "Team Lead",
-            role: { ru: "Креатив-директор", az: "Kreativ direktor" },
-            avatarSrc: "",
-          },
-        ],
-      };
-    });
-  }
+  updateContent((cc) => {
+    const about = cc.about ?? {};
+    const hero = about.hero ?? {};
+    about.hero = {
+      title: hero.title ?? {},
+      subtitle: hero.subtitle ?? {},
+      imageSrc: hero.imageSrc ?? "",
+    };
+    about.stats = Array.isArray(about.stats) ? about.stats : [];
+    about.values = Array.isArray(about.values) ? about.values : [];
+    about.timeline = Array.isArray(about.timeline) ? about.timeline : [];
+    about.team = Array.isArray(about.team) ? about.team : [];
+    cc.about = about;
+  });
 }
 
 /* ---------- Core sections ---------- */
