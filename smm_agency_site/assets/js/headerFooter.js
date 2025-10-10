@@ -29,6 +29,17 @@ const DEFAULT_NAV_ITEMS = [
   },
 ];
 
+const DEFAULT_NAV_LOOKUP = DEFAULT_NAV_ITEMS.reduce((acc, item) => {
+  acc[item.key] = item.label;
+  return acc;
+}, {});
+
+function fallbackLabel(key, locale) {
+  const labels = DEFAULT_NAV_LOOKUP[key];
+  if (!labels) return "";
+  return labels[locale] || labels.ru || "";
+}
+
 function icon(name) {
   const map = {
     instagram:
@@ -93,11 +104,16 @@ export function renderHeaderFooter() {
               const label =
                 (translated && translated !== n.key && translated) ||
                 n.label?.[currentLocale] ||
+                fallbackLabel(n.key, currentLocale) ||
                 n.label?.ru ||
                 n.key ||
                 "";
-              const fallbackRu = escapeAttr(n.label?.ru || "");
-              const fallbackAz = escapeAttr(n.label?.az || "");
+              const fallbackRu = escapeAttr(
+                n.label?.ru || fallbackLabel(n.key, "ru")
+              );
+              const fallbackAz = escapeAttr(
+                n.label?.az || fallbackLabel(n.key, "az")
+              );
               return `<a href="${n.href}" data-i18n="${n.key}" data-i18n-fallback-ru="${fallbackRu}" data-i18n-fallback-az="${fallbackAz}">${label}</a>`;
             })
             .join("")}
@@ -134,11 +150,16 @@ export function renderHeaderFooter() {
             const label =
               (translated && translated !== n.key && translated) ||
               n.label?.[currentLocale] ||
+              fallbackLabel(n.key, currentLocale) ||
               n.label?.ru ||
               n.key ||
               "";
-            const fallbackRu = escapeAttr(n.label?.ru || "");
-            const fallbackAz = escapeAttr(n.label?.az || "");
+            const fallbackRu = escapeAttr(
+              n.label?.ru || fallbackLabel(n.key, "ru")
+            );
+            const fallbackAz = escapeAttr(
+              n.label?.az || fallbackLabel(n.key, "az")
+            );
             return `<a href="${n.href}" data-i18n="${n.key}" data-i18n-fallback-ru="${fallbackRu}" data-i18n-fallback-az="${fallbackAz}" class="drawer-link">${label}</a>`;
           })
           .join("")}
