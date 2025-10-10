@@ -1,6 +1,34 @@
 // assets/js/headerFooter.js
 import { getContent, getT, setLocale, onContentChange } from "./i18n.js";
 
+const DEFAULT_NAV_ITEMS = [
+  {
+    href: "index.html",
+    key: "home",
+    label: { ru: "Главная", az: "Ana səhifə" },
+  },
+  {
+    href: "services.html",
+    key: "services",
+    label: { ru: "Услуги", az: "Xidmətlər" },
+  },
+  {
+    href: "cases.html",
+    key: "cases",
+    label: { ru: "Кейсы", az: "Layihələr" },
+  },
+  {
+    href: "about.html",
+    key: "about",
+    label: { ru: "О нас", az: "Haqqımızda" },
+  },
+  {
+    href: "contact.html",
+    key: "contact",
+    label: { ru: "Контакты", az: "Əlaqə" },
+  },
+];
+
 function icon(name) {
   const map = {
     instagram:
@@ -34,7 +62,11 @@ export function renderHeaderFooter() {
 
   if (rootHeader) {
     const hasLogo = !!content.site.logoSrc;
-    const currentLocale = content.locale || 'ru';
+    const currentLocale = content.locale || "ru";
+    const navItems =
+      Array.isArray(content.site.nav) && content.site.nav.length
+        ? content.site.nav
+        : DEFAULT_NAV_ITEMS;
 
     // Desktop nav (visible ≥ 901px), burger visible on mobile
     rootHeader.innerHTML = `
@@ -50,10 +82,17 @@ export function renderHeaderFooter() {
         </a>
 
         <nav class="nav desktop-nav">
-          ${content.site.nav
-            .map(
-              (n) => `<a href="${n.href}" data-i18n="${n.key}">${t(n.key)}</a>`
-            )
+          ${navItems
+            .map((n) => {
+              const translated = t(n.key);
+              const label =
+                (translated && translated !== n.key && translated) ||
+                n.label?.[currentLocale] ||
+                n.label?.ru ||
+                n.key ||
+                "";
+              return `<a href="${n.href}" data-i18n="${n.key}">${label}</a>`;
+            })
             .join("")}
         </nav>
 
@@ -82,13 +121,17 @@ export function renderHeaderFooter() {
         <button class="drawer-close" aria-label="Закрыть меню">${closeIcon()}</button>
       </div>
       <nav class="drawer-nav">
-        ${content.site.nav
-          .map(
-            (n) =>
-              `<a href="${n.href}" data-i18n="${n.key}" class="drawer-link">${t(
-                n.key
-              )}</a>`
-          )
+        ${navItems
+          .map((n) => {
+            const translated = t(n.key);
+            const label =
+              (translated && translated !== n.key && translated) ||
+              n.label?.[currentLocale] ||
+              n.label?.ru ||
+              n.key ||
+              "";
+            return `<a href="${n.href}" data-i18n="${n.key}" class="drawer-link">${label}</a>`;
+          })
           .join("")}
       </nav>
       <div class="drawer-lang">
