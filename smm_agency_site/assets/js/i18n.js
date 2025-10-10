@@ -100,6 +100,14 @@ export function refreshI18nText() {
   document.querySelectorAll("[data-i18n]").forEach((el) => {
     const key = el.getAttribute("data-i18n");
     const wantBoth = el.hasAttribute("data-i18n-both");
+    const fallbackRu =
+      el.getAttribute("data-i18n-fallback-ru") ||
+      el.getAttribute("data-i18n-fallback") ||
+      "";
+    const fallbackAz =
+      el.getAttribute("data-i18n-fallback-az") ||
+      el.getAttribute("data-i18n-fallback") ||
+      "";
 
     if (wantBoth) {
       const ru = dictRU[key] || key;
@@ -112,7 +120,8 @@ export function refreshI18nText() {
     } else {
       // Старое поведение: один активный язык
       const dict = loc === "az" ? dictAZ : dictRU;
-      el.textContent = dict[key] || key;
+      const fallback = loc === "az" ? fallbackAz : fallbackRu;
+      el.textContent = dict[key] || fallback || key;
     }
   });
 }

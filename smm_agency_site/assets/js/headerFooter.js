@@ -54,6 +54,11 @@ function closeIcon() {
     </svg>`;
 }
 
+function escapeAttr(value) {
+  if (!value) return "";
+  return String(value).replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
 export function renderHeaderFooter() {
   const rootHeader = document.getElementById("site-header");
   const rootFooter = document.getElementById("site-footer");
@@ -91,7 +96,9 @@ export function renderHeaderFooter() {
                 n.label?.ru ||
                 n.key ||
                 "";
-              return `<a href="${n.href}" data-i18n="${n.key}">${label}</a>`;
+              const fallbackRu = escapeAttr(n.label?.ru || "");
+              const fallbackAz = escapeAttr(n.label?.az || "");
+              return `<a href="${n.href}" data-i18n="${n.key}" data-i18n-fallback-ru="${fallbackRu}" data-i18n-fallback-az="${fallbackAz}">${label}</a>`;
             })
             .join("")}
         </nav>
@@ -130,7 +137,9 @@ export function renderHeaderFooter() {
               n.label?.ru ||
               n.key ||
               "";
-            return `<a href="${n.href}" data-i18n="${n.key}" class="drawer-link">${label}</a>`;
+            const fallbackRu = escapeAttr(n.label?.ru || "");
+            const fallbackAz = escapeAttr(n.label?.az || "");
+            return `<a href="${n.href}" data-i18n="${n.key}" data-i18n-fallback-ru="${fallbackRu}" data-i18n-fallback-az="${fallbackAz}" class="drawer-link">${label}</a>`;
           })
           .join("")}
       </nav>
